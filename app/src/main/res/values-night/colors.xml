@@ -9,4 +9,9 @@
     <color name="ios_seg_track">#3D767680</color>
     <color name="ios_seg_thumb">#FF636366</color>
     <color name="ios_seg_thumb_stroke">#00000000</color>
+    <color name="ios_green">#FF30D158</color>
+    <color name="ios_switch_off">#FF39393D</color>
+    <color name="ios_chevron">#FF5A5A5E</color>
+    <color name="ios_row_pressed">#FF3A3A3C</color>
+    <color name="ios_chip">#FF2C2C2E</color>
 </resources>

@@ -1,6 +1,7 @@
 package com.ramiro.iosdroid
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
@@ -13,10 +14,13 @@ import android.graphics.drawable.GradientDrawable.Orientation
 import android.graphics.drawable.LayerDrawable
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.text.TextUtils
 import android.text.format.DateFormat
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewOutlineProvider
@@ -24,7 +28,9 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
+import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -39,6 +45,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.Date
 import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 /** Ajustes del widget con vista previa en vivo. */
@@ -52,7 +59,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var search: EditText
     private lateinit var results: LinearLayout
 
-    private var previewSize = 1
+    private var previewSize = 2
     private var wallpaper = 0
     private var searchJob: Job? = null
 
@@ -100,7 +107,7 @@ class MainActivity : ComponentActivity() {
         }
         applyWallpaper()
 
-        segmented(R.id.seg_size, listOf(R.string.size_small, R.string.size_medium, R.string.size_large), previewSize) {
+        segmented(R.id.seg_size, PREVIEW_SIZES.map { it.first }, previewSize) {
             previewSize = it
             renderPreview()
         }
@@ -116,8 +123,13 @@ class MainActivity : ComponentActivity() {
             prefs.unit = TempUnit.entries[it]
             WeatherWorker.refreshNow(this)
         }
+        setupFonts()
+        setupClockMode()
 
-        findViewById<View>(R.id.pin).setOnClickListener { pinWidget() }
+        findViewById<View>(R.id.pin).apply {
+            pressFeedback()
+            setOnClickListener { pinWidget() }
+        }
         findViewById<View>(R.id.use_location).setOnClickListener { requestLocation() }
         findViewById<View>(R.id.refresh).setOnClickListener {
             WeatherWorker.refreshNow(this)
@@ -162,16 +174,17 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun renderPreview() {
-        val (w, h) = when (previewSize) {
-            0 -> 150f to 150f
-            2 -> 220f to 280f
-            else -> 230f to 190f
-        }
+        val (w, h) = PREVIEW_SIZES[previewSize].second
         previewSlot.layoutParams = previewSlot.layoutParams.apply {
             width = dp(w)
             height = dp(h)
         }
-        previewWall.layoutParams = previewWall.layoutParams.apply { height = dp(h + 70f) }
+        // Los tamaños anchos (5 columnas) se achican para entrar en la tarjeta.
+        val available = (previewWall.width.takeIf { it > 0 } ?: (resources.displayMetrics.widthPixels - dp(32f))) - dp(24f)
+        val scale = min(1f, available / dp(w).toFloat())
+        previewSlot.scaleX = scale
+        previewSlot.scaleY = scale
+        previewWall.layoutParams = previewWall.layoutParams.apply { height = (dp(h) * scale).roundToInt() + dp(56f) }
         previewSlot.removeAllViews()
         runCatching { WidgetRenderer.build(this, w, h).apply(this, previewSlot) }
             .onSuccess { previewSlot.addView(it, FrameLayout.LayoutParams(MATCH, MATCH)) }
@@ -279,6 +292,105 @@ class MainActivity : ComponentActivity() {
         results.addView(row)
     }
 
+    // --- Fuente de la hora ---
+
+    private fun setupFonts() {
+        val row = findViewById<LinearLayout>(R.id.fonts)
+        row.removeAllViews()
+        ClockFont.entries.forEach { font ->
+            val chip = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                gravity = Gravity.CENTER
+                setBackgroundResource(R.drawable.font_chip)
+                setPadding(dp(4f), dp(12f), dp(4f), dp(10f))
+                isSelected = font == prefs.clockFont
+                contentDescription = getString(font.label)
+                addView(TextView(context).apply {
+                    setText(R.string.font_sample)
+                    typeface = font.typeface()
+                    letterSpacing = font.letterSpacing
+                    textSize = 30f
+                    includeFontPadding = false
+                    setTextColor(getColor(R.color.ios_label))
+                })
+                addView(TextView(context).apply {
+                    setText(font.label)
+                    textSize = 12f
+                    setTextColor(getColor(R.color.ios_secondary))
+                }, LinearLayout.LayoutParams(WRAP, WRAP).apply { topMargin = dp(6f) })
+                pressFeedback()
+                setOnClickListener {
+                    row.children.forEach { it.isSelected = false }
+                    isSelected = true
+                    selectionTick(this)
+                    prefs.clockFont = font
+                    settingsChanged()
+                }
+            }
+            row.addView(chip, LinearLayout.LayoutParams(dp(76f), WRAP).apply { marginEnd = dp(8f) })
+        }
+        // Que la fuente elegida quede a la vista.
+        val scroll = findViewById<HorizontalScrollView>(R.id.font_scroll)
+        scroll.post {
+            val selected = row.getChildAt(prefs.clockFont.ordinal) ?: return@post
+            scroll.scrollTo(max(0, selected.left - dp(12f)), 0)
+        }
+    }
+
+    // --- Modo reloj y protector de pantalla ---
+
+    private fun setupClockMode() {
+        findViewById<View>(R.id.open_clock).setOnClickListener {
+            startActivity(Intent(this, ClockActivity::class.java))
+        }
+        segmented(R.id.seg_saver_bg, listOf(R.string.saver_black, R.string.saver_glass), prefs.saverBackground.ordinal) {
+            prefs.saverBackground = SaverBackground.entries[it]
+        }
+        val dim = findViewById<Switch>(R.id.dim_switch)
+        dim.isChecked = prefs.saverDim
+        dim.setOnCheckedChangeListener { view, checked ->
+            selectionTick(view)
+            prefs.saverDim = checked
+        }
+        findViewById<View>(R.id.dim_row).setOnClickListener { dim.toggle() }
+
+        val dream = dreamSettingsIntent()
+        val dreamRow = findViewById<View>(R.id.dream_settings)
+        if (dream == null) {
+            dreamRow.visibility = View.GONE
+            findViewById<View>(R.id.dream_sep).visibility = View.GONE
+        } else {
+            dreamRow.setOnClickListener {
+                runCatching { startActivity(dream) }.onFailure { toast(R.string.dream_unavailable) }
+            }
+        }
+    }
+
+    /** Ajustes del protector de pantalla. En ColorOS no aparece en el menú, pero la pantalla existe. */
+    private fun dreamSettingsIntent(): Intent? = listOf(
+        Intent(Settings.ACTION_DREAM_SETTINGS),
+        Intent().setClassName("com.android.settings", "com.android.settings.Settings\$DreamSettingsActivity"),
+    ).firstOrNull { it.resolveActivity(packageManager) != null }
+
+    // --- Microinteracciones (guía de iOS: respuesta inmediata al tocar) ---
+
+    /** Al tocar, se achica y atenúa un poco (~100 ms) y vuelve al soltar. */
+    @SuppressLint("ClickableViewAccessibility")
+    private fun View.pressFeedback() = setOnTouchListener { v, event ->
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> v.animate().scaleX(0.96f).scaleY(0.96f).alpha(0.85f).setDuration(100).start()
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
+                v.animate().scaleX(1f).scaleY(1f).alpha(1f).setDuration(180).start()
+        }
+        false
+    }
+
+    /** Vibración leve de selección, como el "selection feedback" de iOS. */
+    private fun selectionTick(view: View) {
+        val effect = if (Build.VERSION.SDK_INT >= 34) HapticFeedbackConstants.SEGMENT_TICK else HapticFeedbackConstants.CLOCK_TICK
+        view.performHapticFeedback(effect)
+    }
+
     // --- Widget ---
 
     private fun pinWidget() {
@@ -338,8 +450,10 @@ class MainActivity : ComponentActivity() {
                 setBackgroundResource(R.drawable.seg_thumb)
                 isSelected = index == selected
                 setOnClickListener {
+                    if (isSelected) return@setOnClickListener
                     group.children.forEach { it.isSelected = false }
                     isSelected = true
+                    selectionTick(this)
                     onSelect(index)
                 }
             }
@@ -364,6 +478,16 @@ class MainActivity : ComponentActivity() {
 
     private companion object {
         const val MATCH = ViewGroup.LayoutParams.MATCH_PARENT
+        const val WRAP = ViewGroup.LayoutParams.WRAP_CONTENT
         const val WALLPAPER_COUNT = 3
+
+        /** Medidas en dp de cada tamaño en un inicio de 5 columnas como el tuyo. */
+        val PREVIEW_SIZES = listOf(
+            R.string.size_2x2 to (144f to 181f),
+            R.string.size_3x2 to (222f to 181f),
+            R.string.size_3x3 to (222f to 273f),
+            R.string.size_5x2 to (378f to 181f),
+            R.string.size_5x3 to (378f to 273f),
+        )
     }
 }

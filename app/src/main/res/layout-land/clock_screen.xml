@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modo reloj / protector de pantalla, horizontal (como StandBy de iOS): hora a la izquierda, fecha y clima a la derecha. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/clock_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FF000000">
+
+    <LinearLayout
+        android:id="@+id/ss_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginStart="40dp"
+        android:layout_marginEnd="40dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="36dp"
+        android:paddingTop="28dp"
+        android:paddingEnd="36dp"
+        android:paddingBottom="28dp">
+
+        <TextClock
+            android:id="@+id/ss_time"
+            style="@style/ClockText.Time"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.7"
+            android:gravity="start|center_vertical" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="28dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextClock
+                android:id="@+id/ss_date"
+                style="@style/ClockText.Date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="20sp" />
+
+            <LinearLayout
+                android:id="@+id/ss_weather"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:id="@+id/ss_icon"
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_wx_sun" />
+
+                <TextView
+                    android:id="@+id/ss_temp"
+                    style="@style/ClockText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:text="@string/sample_temp"
+                    android:textFontWeight="300"
+                    android:textSize="46sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/ss_condition"
+                style="@style/ClockText.Secondary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/sample_condition"
+                android:textSize="19sp" />
+
+            <TextView
+                android:id="@+id/ss_detail"
+                style="@style/ClockText.Tertiary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/sample_hilo"
+                android:textSize="16sp" />
+
+            <LinearLayout
+                android:id="@+id/ss_forecast"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="vertical" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/ss_exit"
+        android:layout_width="wrap_content"
+        android:layout_height="44dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/exit_pill"
+        android:gravity="center"
+        android:paddingStart="22dp"
+        android:paddingEnd="22dp"
+        android:text="@string/clock_exit"
+        android:textColor="#FFFFFFFF"
+        android:textSize="15sp"
+        android:visibility="gone" />
+</FrameLayout>

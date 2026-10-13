@@ -5,10 +5,23 @@ Widget para la pantalla de inicio de Android con **hora, fecha y clima**, con es
 - **Hora grande** (`TextClock`: se actualiza sola cada minuto, sin gastar batería).
 - **Fecha** en el idioma del teléfono: *martes, 13 de octubre*.
 - **Clima actual** con ícono, estado y máx./mín. del día ([Open-Meteo](https://open-meteo.com), gratis y sin API key).
-- **Tres tamaños**: 2×2, 3×2 (por defecto, entra en el hueco al lado de un widget 2×2) y 3×3; se adapta al redimensionarlo.
+- **Próximos días**: *Hoy, Mañana, Jue…* con barras de temperatura de colores como el widget de Clima de iOS
+  (el punto blanco en "Hoy" es la temperatura actual).
+- **Cinco tamaños**: 2×2, 3×2, 3×3 (por defecto), 5×2 y 5×3; se adapta al redimensionarlo.
 - **Tres vidrios**: Transparente, Esmerilado y Ahumado. Texto blanco, negro o automático según el fondo de pantalla.
-- **Fuente del sistema**: usa la familia del teléfono con pesos fino/medio, así que en ColorOS se ve con **OPPO Sans**.
+- **Fuente de la hora** (como la pantalla de bloqueo de iOS): Fina, Ligera, Normal, Gruesa, Negra, Condensada, Serif,
+  Mono y Manuscrita. Los pesos usan la fuente del sistema, así que en ColorOS se ven con **OPPO Sans**.
 - Toques: hora → alarmas, fecha → calendario, clima → ajustes.
+
+## Modo reloj y protector de pantalla
+
+- **Modo reloj**: hora gigante, fecha, clima y pronóstico a pantalla completa. La pantalla **no se apaga** mientras está
+  abierto y se sigue viendo con el teléfono bloqueado. En horizontal se ve como StandBy de iOS. Fondo negro (ideal OLED)
+  o tarjeta de vidrio sobre tu fondo de pantalla, y opción de brillo bajo para la noche. Se abre desde la app o
+  manteniendo presionado el ícono → *Modo reloj*. Para salir: tocar una vez y *Salir*.
+- **Protector de pantalla del sistema** (*Reloj Glass*): se activa solo mientras el teléfono carga. En ColorOS el menú
+  está oculto; el botón de la app abre esa pantalla de Ajustes directamente.
+- Para cuidar la pantalla, el contenido se mueve un poco cada minuto (sin animación si está activado "Reducir movimiento").
 
 ## Instalar
 
@@ -24,9 +37,17 @@ Si el clima deja de actualizarse, en Ajustes → Batería permitir que iOSDroid 
 ```bash
 ./gradlew assembleRelease          # app/build/outputs/apk/release/app-release.apk
 ./gradlew testDebugUnitTest        # tests + capturas del widget en app/build/snapshots/
+python3 tools/gen_widget_layouts.py app/src/main/res/layout   # regenera los layouts del widget
 ```
 
 Requiere JDK 17+ y el Android SDK (compileSdk 36).
+
+## Estilo
+
+Sigue la guía de diseño de iOS (Human Interface Guidelines): espaciado en múltiplos de 4 dp, colores del sistema
+(azul `#007AFF`, verde `#34C759`, etiquetas primaria/secundaria/terciaria), jerarquía tipográfica (Large Title,
+Headline, Body, Footnote), grupos en tarjetas, filas con ›, interruptores y controles segmentados, respuesta al tacto
+(escala + opacidad ~100 ms y vibración leve de selección) y descripciones para lectores de pantalla.
 
 ## Notas
 

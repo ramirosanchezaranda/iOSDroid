@@ -39,7 +39,23 @@
         <item name="android:paddingEnd">16dp</item>
         <item name="android:textSize">17sp</item>
         <item name="android:textColor">@color/ios_label</item>
-        <item name="android:background">?android:attr/selectableItemBackground</item>
+        <item name="android:background">@drawable/row_highlight</item>
+    </style>
+
+    <style name="Row.Disclosure">
+        <item name="android:drawableEnd">@drawable/ic_chevron</item>
+        <item name="android:drawablePadding">8dp</item>
+    </style>
+
+    <!-- Jerarquía tipográfica de iOS -->
+    <style name="Footnote">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:textColor">@color/ios_secondary</item>
+        <item name="android:textSize">13sp</item>
     </style>
 
     <style name="Separator">
@@ -78,11 +94,63 @@
         <item name="android:letterSpacing">-0.02</item>
         <item name="android:fontFeatureSettings">tnum</item>
         <item name="android:ellipsize">none</item>
+        <item name="android:textSize">64sp</item>
         <item name="android:autoSizeTextType">uniform</item>
         <item name="android:autoSizeMinTextSize">24sp</item>
+        <item name="android:autoSizeMaxTextSize">104sp</item>
         <item name="android:autoSizeStepGranularity">1sp</item>
         <item name="android:format12Hour">h:mm</item>
         <item name="android:format24Hour">HH:mm</item>
+    </style>
+
+    <!-- Una variante por fuente (ver ClockFont.kt). textStyle es el respaldo para Android 8. -->
+    <style name="WidgetText.Time.Thin">
+        <item name="android:textFontWeight">200</item>
+    </style>
+
+    <style name="WidgetText.Time.Light">
+        <item name="android:textFontWeight">300</item>
+    </style>
+
+    <style name="WidgetText.Time.Regular">
+        <item name="android:textFontWeight">400</item>
+    </style>
+
+    <style name="WidgetText.Time.Bold">
+        <item name="android:textFontWeight">700</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.03</item>
+    </style>
+
+    <style name="WidgetText.Time.Heavy">
+        <item name="android:textFontWeight">900</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.03</item>
+    </style>
+
+    <style name="WidgetText.Time.Condensed">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textFontWeight">400</item>
+        <item name="android:letterSpacing">-0.01</item>
+    </style>
+
+    <style name="WidgetText.Time.Serif">
+        <item name="android:fontFamily">serif</item>
+        <item name="android:textFontWeight">400</item>
+        <item name="android:letterSpacing">0</item>
+    </style>
+
+    <style name="WidgetText.Time.Mono">
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:textFontWeight">400</item>
+        <item name="android:letterSpacing">-0.04</item>
+    </style>
+
+    <style name="WidgetText.Time.Script">
+        <item name="android:fontFamily">cursive</item>
+        <item name="android:textFontWeight">700</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0</item>
     </style>
 
     <style name="WidgetText.Date">
@@ -109,5 +177,45 @@
     <style name="WidgetText.Tertiary">
         <item name="android:textColor">@color/widget_text_tertiary</item>
         <item name="android:textSize">12sp</item>
+    </style>
+    <!-- Modo reloj / protector de pantalla -->
+    <style name="Theme.IOSDroid.Clock" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="ClockText">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textColor">#FFFFFFFF</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:shadowColor">#40000000</item>
+        <item name="android:shadowRadius">10</item>
+        <item name="android:shadowDy">1</item>
+    </style>
+
+    <style name="ClockText.Time">
+        <item name="android:ellipsize">none</item>
+        <item name="android:fontFeatureSettings">tnum</item>
+        <item name="android:textSize">120sp</item>
+        <item name="android:format12Hour">h:mm</item>
+        <item name="android:format24Hour">HH:mm</item>
+    </style>
+
+    <style name="ClockText.Date">
+        <item name="android:textFontWeight">500</item>
+        <item name="android:textColor">#D9FFFFFF</item>
+    </style>
+
+    <style name="ClockText.Secondary">
+        <item name="android:textFontWeight">500</item>
+        <item name="android:textColor">#D9FFFFFF</item>
+    </style>
+
+    <style name="ClockText.Tertiary">
+        <item name="android:textColor">#A6FFFFFF</item>
     </style>
 </resources>

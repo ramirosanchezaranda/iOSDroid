@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- La hora del widget, una vez por fuente. El código deja visible solo la elegida
+     (RemoteViews no permite cambiar la fuente en tiempo de ejecución). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/time_box"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextClock
+        android:id="@+id/time_thin"
+        style="@style/WidgetText.Time.Thin"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="start|center_vertical"
+        android:visibility="gone" />
+
+    <TextClock
+        android:id="@+id/time_light"
+        style="@style/WidgetText.Time.Light"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="start|center_vertical"
+        android:visibility="visible" />
+
+    <TextClock
+        android:id="@+id/time_regular"
+        style="@style/WidgetText.Time.Regular"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="start|center_vertical"
+        android:visibility="gone" />
+
+    <TextClock
+        android:id="@+id/time_bold"
+        style="@style/WidgetText.Time.Bold"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="start|center_vertical"
+        android:visibility="gone" />
+
+    <TextClock
+        android:id="@+id/time_heavy"
+        style="@style/WidgetText.Time.Heavy"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="start|center_vertical"
+        android:visibility="gone" />
+
+    <TextClock
+        android:id="@+id/time_condensed"
+        style="@style/WidgetText.Time.Condensed"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="start|center_vertical"
+        android:visibility="gone" />
+
+    <TextClock
+        android:id="@+id/time_serif"
+        style="@style/WidgetText.Time.Serif"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="start|center_vertical"
+        android:visibility="gone" />
+
+    <TextClock
+        android:id="@+id/time_mono"
+        style="@style/WidgetText.Time.Mono"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="start|center_vertical"
+        android:visibility="gone" />
+
+    <TextClock
+        android:id="@+id/time_script"
+        style="@style/WidgetText.Time.Script"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="start|center_vertical"
+        android:visibility="gone" />
+</FrameLayout>

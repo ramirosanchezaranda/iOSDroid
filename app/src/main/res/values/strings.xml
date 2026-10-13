@@ -11,6 +11,11 @@
     <string name="sample_hilo_short">↑25° ↓14°</string>
     <string name="sample_city">Buenos Aires</string>
 
+    <string name="today">Hoy</string>
+    <string name="tomorrow">Mañana</string>
+    <string name="sample_day">Mañana</string>
+    <string name="sample_min">14°</string>
+    <string name="sample_max">25°</string>
     <string name="temp_unknown">--°</string>
     <string name="tap_to_setup">Toca para configurar</string>
     <string name="updating">Actualizando…</string>
@@ -44,6 +49,12 @@
     <string name="add_to_home">Añadir a la pantalla de inicio</string>
     <string name="add_manually">Mantén presionado un espacio libre del inicio → Widgets → iOSDroid → Reloj Glass.</string>
     <string name="section_size">Tamaño de la vista previa</string>
+    <string name="size_2x2">2×2</string>
+    <string name="size_3x2">3×2</string>
+    <string name="size_3x3">3×3</string>
+    <string name="size_5x2">5×2</string>
+    <string name="size_5x3">5×3</string>
+    <string name="font_sample">12</string>
     <string name="size_small">Pequeño</string>
     <string name="size_medium">Mediano</string>
     <string name="size_large">Grande</string>
@@ -74,5 +85,35 @@
     <string name="fahrenheit">Fahrenheit (°F)</string>
     <string name="status_never">Todavía no hay datos del clima.</string>
     <string name="status_updated">Clima actualizado a las %1$s · %2$s</string>
+    <!-- Fuente de la hora -->
+    <string name="section_font">Fuente de la hora</string>
+    <string name="font_note">Usa la fuente del sistema (OPPO Sans en tu teléfono) en distintos pesos, y otras fuentes del sistema. Android no permite fuentes propias dentro de los widgets.</string>
+    <string name="font_thin">Fina</string>
+    <string name="font_light">Ligera</string>
+    <string name="font_regular">Normal</string>
+    <string name="font_bold">Gruesa</string>
+    <string name="font_heavy">Negra</string>
+    <string name="font_condensed">Condensada</string>
+    <string name="font_serif">Serif</string>
+    <string name="font_mono">Mono</string>
+    <string name="font_script">Manuscrita</string>
+
+    <!-- Modo reloj / protector de pantalla -->
+    <string name="section_saver">Modo reloj y protector de pantalla</string>
+    <string name="open_clock">Abrir modo reloj</string>
+    <string name="saver_black">Fondo negro</string>
+    <string name="saver_glass">Vidrio</string>
+    <string name="saver_bright">Brillo normal</string>
+    <string name="saver_dim">Brillo bajo</string>
+    <string name="saver_dim_hint">Atenúa la pantalla (ideal de noche)</string>
+    <string name="dream_settings">Protector de pantalla del sistema</string>
+    <string name="dream_unavailable">Este teléfono no permite abrir el protector de pantalla. Usa el modo reloj.</string>
+    <string name="saver_note">El modo reloj deja la pantalla siempre encendida mientras está abierto (conviene con el cargador) y se sigue viendo aunque el teléfono se bloquee. Toca una vez y luego «Salir» para cerrarlo.\n\nEl protector de pantalla se activa solo mientras el teléfono carga. En ColorOS esa opción está oculta en Ajustes: el botón la abre directamente, y ahí eliges «Reloj Glass».\n\nPara cuidar la pantalla, el reloj se mueve un poco cada minuto.</string>
+    <string name="clock_exit">Salir</string>
+    <string name="clock_mode">Modo reloj</string>
+    <string name="clock_mode_long">Abrir modo reloj</string>
+    <string name="dream_name">Reloj Glass</string>
+    <string name="saver_no_location">Abre iOSDroid para elegir la ubicación</string>
+
     <string name="footer">Toca la hora para abrir las alarmas, la fecha para abrir el calendario y el clima para volver acá.\n\nSi el clima deja de actualizarse, en Ajustes → Batería permite que iOSDroid funcione en segundo plano.\n\nDatos del clima: Open-Meteo.com (CC BY 4.0).</string>
 </resources>

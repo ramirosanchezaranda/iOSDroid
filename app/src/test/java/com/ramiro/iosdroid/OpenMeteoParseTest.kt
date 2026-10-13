@@ -34,6 +34,39 @@ class OpenMeteoParseTest {
         assertEquals(R.drawable.ic_wx_cloud, WeatherCodes.icon(w.code, w.isDay))
     }
 
+    /** Respuesta real con pronóstico de 6 días (13/10/2026, noche en Buenos Aires). */
+    private val sixDays = """
+        {"latitude":-34.622143,"longitude":-58.40909,"utc_offset_seconds":-10800,"timezone":"America/Argentina/Buenos_Aires",
+         "current":{"time":"2026-10-13T20:30","interval":900,"temperature_2m":14.6,"weather_code":3,"is_day":0},
+         "daily":{"time":["2026-10-13","2026-10-14","2026-10-15","2026-10-16","2026-10-17","2026-10-18"],
+                  "weather_code":[53,51,53,51,3,3],
+                  "temperature_2m_max":[18.4,19.3,18.6,16.8,15.3,15.1],
+                  "temperature_2m_min":[13.2,12.5,13.2,12.2,6.9,9.2],
+                  "precipitation_probability_max":[100,39,87,52,18,10]}}
+    """.trimIndent()
+
+    @Test
+    fun parsesSixDayForecast() {
+        val w = OpenMeteo.parseForecast(sixDays, TempUnit.CELSIUS)
+        assertEquals(6, w.days.size)
+        assertEquals(DayForecast("2026-10-14", 51, 19.3, 12.5, 39), w.days[1])
+        assertEquals(100, w.days[0].precip)
+        assertTrue(!w.isDay)
+        assertEquals(R.drawable.ic_wx_drizzle, WeatherCodes.icon(w.days[2].code, true))
+        // Desde el 14/10, "hoy" ya no aparece.
+        val upcoming = Forecast.upcoming(w.days, java.time.LocalDate.of(2026, 10, 14))
+        assertEquals("2026-10-14", upcoming.first().date)
+        assertEquals(5, upcoming.size)
+    }
+
+    @Test
+    fun skipsDaysWithoutData() {
+        val body = sixDays.replace("[18.4,19.3,", "[18.4,null,").replace("[100,39,", "[100,null,")
+        val w = OpenMeteo.parseForecast(body, TempUnit.CELSIUS)
+        assertEquals(5, w.days.size)
+        assertEquals("2026-10-15", w.days[1].date)
+    }
+
     @Test
     fun parsesCities() {
         val body = """

@@ -18,6 +18,11 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="content" android:host="com.android.calendar" />
         </intent>
+        <!-- Ajustes del protector de pantalla (en ColorOS está oculto, se abre directo). -->
+        <intent>
+            <action android:name="android.settings.DREAM_SETTINGS" />
+        </intent>
+        <package android:name="com.android.settings" />
     </queries>
 
     <application
@@ -39,7 +44,37 @@
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
+
+        <!-- Modo reloj: pantalla completa que no se apaga. -->
+        <activity
+            android:name=".ClockActivity"
+            android:exported="true"
+            android:label="@string/clock_mode"
+            android:launchMode="singleTask"
+            android:screenOrientation="fullUser"
+            android:showWhenLocked="true"
+            android:taskAffinity="com.ramiro.iosdroid.clock"
+            android:excludeFromRecents="true"
+            android:theme="@style/Theme.IOSDroid.Clock" />
+
+        <!-- Protector de pantalla del sistema (se activa mientras carga). -->
+        <service
+            android:name=".ClockDreamService"
+            android:exported="true"
+            android:label="@string/dream_name"
+            android:permission="android.permission.BIND_DREAM_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.dreams.DreamService" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.dream"
+                android:resource="@xml/clock_dream" />
+        </service>
 
         <receiver
             android:name=".GlassClockWidget"

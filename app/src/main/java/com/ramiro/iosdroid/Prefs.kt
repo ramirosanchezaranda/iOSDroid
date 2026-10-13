@@ -1,6 +1,9 @@
 package com.ramiro.iosdroid
 
 import android.content.Context
+import android.content.SharedPreferences
+import org.json.JSONArray
+import org.json.JSONObject
 
 enum class GlassStyle(val key: String) {
     CLEAR("clear"), FROSTED("frosted"), SMOKED("smoked");
@@ -37,6 +40,18 @@ data class Weather(
     val min: Double,
     val unit: TempUnit,
     val updatedAt: Long,
+    /** Pronóstico diario: hoy primero, después mañana, pasado, etc. */
+    val days: List<DayForecast> = emptyList(),
+)
+
+data class DayForecast(
+    /** Fecha ISO, "2026-10-14". */
+    val date: String,
+    val code: Int,
+    val max: Double,
+    val min: Double,
+    /** Probabilidad máxima de lluvia del día, en %. */
+    val precip: Int,
 )
 
 class Prefs(context: Context) {
@@ -49,6 +64,25 @@ class Prefs(context: Context) {
     var textTone: TextTone
         get() = TextTone.from(sp.getString("text_tone", null))
         set(v) = sp.edit().putString("text_tone", v.key).apply()
+
+    var clockFont: ClockFont
+        get() = ClockFont.from(sp.getString("clock_font", null))
+        set(v) = sp.edit().putString("clock_font", v.key).apply()
+
+    var saverBackground: SaverBackground
+        get() = SaverBackground.from(sp.getString("saver_bg", null))
+        set(v) = sp.edit().putString("saver_bg", v.key).apply()
+
+    /** Modo reloj con poco brillo (de noche, o para cuidar la pantalla). */
+    var saverDim: Boolean
+        get() = sp.getBoolean("saver_dim", false)
+        set(v) = sp.edit().putBoolean("saver_dim", v).apply()
+
+    fun listen(listener: SharedPreferences.OnSharedPreferenceChangeListener) =
+        sp.registerOnSharedPreferenceChangeListener(listener)
+
+    fun unlisten(listener: SharedPreferences.OnSharedPreferenceChangeListener) =
+        sp.unregisterOnSharedPreferenceChangeListener(listener)
 
     var unit: TempUnit
         get() = TempUnit.from(sp.getString("unit", null))
@@ -84,12 +118,14 @@ class Prefs(context: Context) {
                 min = sp.getString("wx_min", null)?.toDoubleOrNull() ?: return null,
                 unit = TempUnit.from(sp.getString("wx_unit", null)),
                 updatedAt = sp.getLong("wx_updated", 0L),
+                days = decodeDays(sp.getString("wx_days", null)),
             )
         }
         set(v) {
             sp.edit().apply {
                 if (v == null) {
-                    listOf("wx_temp", "wx_code", "wx_day", "wx_max", "wx_min", "wx_unit", "wx_updated").forEach(::remove)
+                    listOf("wx_temp", "wx_code", "wx_day", "wx_max", "wx_min", "wx_unit", "wx_updated", "wx_days")
+                        .forEach(::remove)
                 } else {
                     putString("wx_temp", v.temp.toString())
                     putInt("wx_code", v.code)
@@ -97,6 +133,7 @@ class Prefs(context: Context) {
                     putString("wx_max", v.max.toString())
                     putString("wx_min", v.min.toString())
                     putString("wx_unit", v.unit.key)
+                    putString("wx_days", encodeDays(v.days))
                     putLong("wx_updated", v.updatedAt)
                 }
             }.apply()
@@ -106,4 +143,21 @@ class Prefs(context: Context) {
     var lastRefreshRequest: Long
         get() = sp.getLong("last_refresh_request", 0L)
         set(v) = sp.edit().putLong("last_refresh_request", v).apply()
+
+    private fun encodeDays(days: List<DayForecast>): String = JSONArray().apply {
+        days.forEach { d ->
+            put(JSONObject().put("date", d.date).put("code", d.code).put("max", d.max).put("min", d.min).put("precip", d.precip))
+        }
+    }.toString()
+
+    private fun decodeDays(json: String?): List<DayForecast> {
+        if (json.isNullOrBlank()) return emptyList()
+        return runCatching {
+            val array = JSONArray(json)
+            (0 until array.length()).map { i ->
+                val o = array.getJSONObject(i)
+                DayForecast(o.getString("date"), o.getInt("code"), o.getDouble("max"), o.getDouble("min"), o.optInt("precip"))
+            }
+        }.getOrDefault(emptyList())
+    }
 }

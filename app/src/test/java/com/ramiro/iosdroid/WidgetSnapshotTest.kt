@@ -45,9 +45,11 @@ class WidgetSnapshotTest {
     private val density get() = ctx.resources.displayMetrics.density
 
     private val sizes = linkedMapOf(
-        "small" to (150f to 180f),
-        "medium" to (210f to 180f),
-        "large" to (210f to 275f),
+        "small" to (144f to 181f),
+        "medium" to (222f to 181f),
+        "large" to (222f to 273f),
+        "wide" to (378f to 181f),
+        "xl" to (378f to 273f),
     )
 
     @Before
@@ -59,7 +61,17 @@ class WidgetSnapshotTest {
         WorkManagerTestInitHelper.initializeTestWorkManager(ctx)
         Prefs(ctx).apply {
             place = Place("Buenos Aires", -34.61, -58.38, auto = true)
-            weather = Weather(22.4, 2, true, 25.2, 14.1, TempUnit.CELSIUS, System.currentTimeMillis())
+            weather = Weather(
+                22.4, 2, true, 25.2, 14.1, TempUnit.CELSIUS, System.currentTimeMillis(),
+                days = listOf(
+                    DayForecast("2026-10-13", 2, 25.2, 14.1, 10),
+                    DayForecast("2026-10-14", 0, 27.0, 15.3, 0),
+                    DayForecast("2026-10-15", 61, 19.4, 12.2, 70),
+                    DayForecast("2026-10-16", 3, 17.1, 9.8, 30),
+                    DayForecast("2026-10-17", 1, 22.6, 11.0, 0),
+                    DayForecast("2026-10-18", 95, 28.4, 18.9, 80),
+                ),
+            )
             textTone = TextTone.LIGHT
             style = GlassStyle.CLEAR
         }
@@ -70,7 +82,39 @@ class WidgetSnapshotTest {
         assertEquals(WidgetRenderer.Variant.SMALL, WidgetRenderer.variantFor(140f, 180f))
         assertEquals(WidgetRenderer.Variant.MEDIUM, WidgetRenderer.variantFor(210f, 180f))
         assertEquals(WidgetRenderer.Variant.MEDIUM, WidgetRenderer.variantFor(250f, 110f))
-        assertEquals(WidgetRenderer.Variant.LARGE, WidgetRenderer.variantFor(210f, 275f))
+        assertEquals(WidgetRenderer.Variant.LARGE, WidgetRenderer.variantFor(222f, 273f))
+        assertEquals(WidgetRenderer.Variant.WIDE, WidgetRenderer.variantFor(378f, 181f))
+        assertEquals(WidgetRenderer.Variant.XL, WidgetRenderer.variantFor(378f, 273f))
+    }
+
+    @Test
+    fun largeShowsUpcomingDays() {
+        val view = inflate(222f, 273f)
+        assertEquals("Hoy", view.findViewById<TextView>(R.id.f0_day).text.toString())
+        assertEquals("Mañana", view.findViewById<TextView>(R.id.f1_day).text.toString())
+        assertEquals("Jue", view.findViewById<TextView>(R.id.f2_day).text.toString())
+        assertEquals("19°", view.findViewById<TextView>(R.id.f2_max).text.toString())
+        assertEquals("12°", view.findViewById<TextView>(R.id.f2_min).text.toString())
+        // 3×3: tres días, para que la hora siga siendo lo principal.
+        assertEquals(View.GONE, view.findViewById<View>(R.id.f3_row).visibility)
+        assertNotNull(view.findViewById<ImageView>(R.id.f0_bar).drawable)
+    }
+
+    @Test
+    fun xlUsesFullDayNamesAndCity() {
+        val view = inflate(378f, 273f)
+        assertEquals("Jueves", view.findViewById<TextView>(R.id.f2_day).text.toString())
+        assertEquals("Buenos Aires", view.findViewById<TextView>(R.id.city).text.toString())
+    }
+
+    @Test
+    fun onlyChosenFontIsVisible() {
+        Prefs(ctx).clockFont = ClockFont.SERIF
+        val view = inflate(222f, 181f)
+        ClockFont.entries.forEach {
+            val expected = if (it == ClockFont.SERIF) View.VISIBLE else View.GONE
+            assertEquals(it.name, expected, view.findViewById<View>(it.timeId).visibility)
+        }
     }
 
     @Test
@@ -86,7 +130,7 @@ class WidgetSnapshotTest {
         val bmp = draw(210f, 180f, wallpaper = false)
         assertNotNull(bmp)
         val view = lastWidget!!
-        assertEquals("16:26", view.findViewById<TextView>(R.id.time).text.toString())
+        assertEquals("16:26", view.findViewById<TextView>(ClockFont.LIGHT.timeId).text.toString())
         assertEquals("martes, 13 de octubre", view.findViewById<TextView>(R.id.date).text.toString())
     }
 
@@ -110,8 +154,52 @@ class WidgetSnapshotTest {
                 save(draw(w, h, wallpaper = false), "alpha_${style.key}_$name.png")
             }
         }
-        Prefs(ctx).apply { style = GlassStyle.FROSTED; textTone = TextTone.DARK }
-        save(draw(210f, 180f, wallpaper = false), "alpha_frosted_dark_medium.png")
+        Prefs(ctx).apply { style = GlassStyle.CLEAR }
+        // Medida del hueco 3×3 libre en la captura del inicio (para componer la vista previa).
+        save(draw(210f, 300f, wallpaper = false), "alpha_home_3x3.png")
+        for (font in ClockFont.entries) {
+            Prefs(ctx).clockFont = font
+            save(draw(222f, 181f, wallpaper = true), "font_${font.key}.png")
+        }
+    }
+
+    @Test
+    fun renderClockScreens() {
+        for (bg in SaverBackground.entries) {
+            Prefs(ctx).saverBackground = bg
+            save(drawClock(landscape = false), "clock_${bg.key}_portrait.png")
+        }
+    }
+
+    @Config(qualifiers = "es-w880dp-h400dp-land-xxhdpi")
+    @Test
+    fun renderClockLandscape() {
+        Prefs(ctx).saverBackground = SaverBackground.BLACK
+        Prefs(ctx).clockFont = ClockFont.BOLD
+        save(drawClock(landscape = true), "clock_black_landscape.png")
+    }
+
+    private fun drawClock(landscape: Boolean): Bitmap {
+        val activity = Robolectric.buildActivity(ClockActivity::class.java).setup().get()
+        shadowOf(Looper.getMainLooper()).idle()
+        val root = activity.window.decorView
+        val w = ((if (landscape) 880 else 400) * density).roundToInt()
+        val h = ((if (landscape) 400 else 880) * density).roundToInt()
+        repeat(2) {
+            root.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(h, View.MeasureSpec.EXACTLY))
+            root.layout(0, 0, w, h)
+            shadowOf(Looper.getMainLooper()).idle()
+        }
+        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        // Fondo de ejemplo para ver el modo "Vidrio" (en el teléfono es tu fondo de pantalla).
+        if (Prefs(ctx).saverBackground == SaverBackground.GLASS) {
+            GradientDrawable(
+                GradientDrawable.Orientation.BL_TR,
+                intArrayOf(0xFF000000.toInt(), 0xFF120403.toInt(), 0xCCE2470C.toInt(), 0xFFF59E42.toInt(), 0xFF3A0D05.toInt(), 0xFF000000.toInt()),
+            ).apply { setBounds(0, 0, w, h) }.draw(Canvas(bmp))
+        }
+        root.draw(Canvas(bmp))
+        return bmp
     }
 
     @Test

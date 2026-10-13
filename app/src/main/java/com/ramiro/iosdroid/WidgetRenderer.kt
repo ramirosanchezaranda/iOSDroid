@@ -24,33 +24,73 @@ import kotlin.math.roundToInt
 /** Arma las RemoteViews del widget para cada tamaño. */
 object WidgetRenderer {
 
-    enum class Variant(val layout: Int) {
-        SMALL(R.layout.widget_small),
-        MEDIUM(R.layout.widget_medium),
-        LARGE(R.layout.widget_large),
+    /** Un layout por tamaño (generados con tools/gen_widget_layouts.py). */
+    enum class Variant(
+        val layout: Int,
+        /** Muestra máx./mín. de hoy junto al clima actual (los grandes lo muestran en la fila "Hoy"). */
+        val showsHilo: Boolean,
+        val hasCity: Boolean,
+        val hasDivider: Boolean,
+        /** Filas de pronóstico que hay en el layout. */
+        val forecastRows: Int,
+        val barWidthDp: Int,
+        val shortDayNames: Boolean,
+    ) {
+        SMALL(R.layout.widget_small, true, false, false, 0, 0, true),
+        MEDIUM(R.layout.widget_medium, true, false, false, 0, 0, true),
+        LARGE(R.layout.widget_large, false, false, true, 4, 40, true),
+        WIDE(R.layout.widget_wide, false, false, false, 4, 30, true),
+        XL(R.layout.widget_xl, true, true, true, 5, 100, false),
     }
 
-    /** Tamaño por defecto (3×2) cuando el launcher no informa medidas. */
-    private const val DEFAULT_W = 220f
-    private const val DEFAULT_H = 180f
+    private class RowIds(val row: Int, val day: Int, val icon: Int, val min: Int, val bar: Int, val max: Int)
+
+    private val ROWS = listOf(
+        RowIds(R.id.f0_row, R.id.f0_day, R.id.f0_icon, R.id.f0_min, R.id.f0_bar, R.id.f0_max),
+        RowIds(R.id.f1_row, R.id.f1_day, R.id.f1_icon, R.id.f1_min, R.id.f1_bar, R.id.f1_max),
+        RowIds(R.id.f2_row, R.id.f2_day, R.id.f2_icon, R.id.f2_min, R.id.f2_bar, R.id.f2_max),
+        RowIds(R.id.f3_row, R.id.f3_day, R.id.f3_icon, R.id.f3_min, R.id.f3_bar, R.id.f3_max),
+        RowIds(R.id.f4_row, R.id.f4_day, R.id.f4_icon, R.id.f4_min, R.id.f4_bar, R.id.f4_max),
+    )
+
+    /** Tamaño por defecto (3×3) cuando el launcher no informa medidas. */
+    private const val DEFAULT_W = 222f
+    private const val DEFAULT_H = 273f
 
     fun variantFor(widthDp: Float, heightDp: Float): Variant = when {
+        widthDp >= 330f && heightDp >= 235f -> Variant.XL
+        widthDp >= 330f -> Variant.WIDE
         widthDp >= 175f && heightDp >= 235f -> Variant.LARGE
         widthDp >= 190f -> Variant.MEDIUM
         else -> Variant.SMALL
+    }
+
+    /** Cuántos días entran según el alto, para que la hora siga siendo lo principal. */
+    fun forecastRowsFor(variant: Variant, heightDp: Float): Int = when (variant) {
+        Variant.LARGE -> if (heightDp >= 300f) 4 else 3
+        Variant.WIDE -> if (heightDp >= 170f) 4 else 3
+        Variant.XL -> when {
+            heightDp >= 340f -> 5
+            heightDp >= 290f -> 4
+            else -> 3
+        }
+        else -> 0
     }
 
     /** Todo lo que hace falta para dibujar, leído una vez por actualización. */
     class State(
         val style: GlassStyle,
         val tone: TextTone,
+        val font: ClockFont,
         val place: Place?,
         val weather: Weather?,
     )
 
     fun loadState(context: Context): State {
         val prefs = Prefs(context)
-        return State(prefs.style, resolveTone(context, prefs.style, prefs.textTone), prefs.place, prefs.weather)
+        return State(
+            prefs.style, resolveTone(context, prefs.style, prefs.textTone), prefs.clockFont, prefs.place, prefs.weather,
+        )
     }
 
     fun updateAll(context: Context) {
@@ -99,7 +139,10 @@ object WidgetRenderer {
         val primary = if (state.tone == TextTone.DARK) Color.rgb(28, 28, 30) else Color.WHITE
         val secondary = ColorUtils.setAlphaComponent(primary, if (state.tone == TextTone.DARK) 0xCC else 0xD9)
         val tertiary = ColorUtils.setAlphaComponent(primary, if (state.tone == TextTone.DARK) 0x99 else 0xA6)
-        rv.setTextColor(R.id.time, primary)
+        // Hora: solo queda visible el TextClock con la fuente elegida.
+        val timeId = state.font.timeId
+        ClockFont.entries.forEach { rv.setViewVisibility(it.timeId, if (it == state.font) View.VISIBLE else View.GONE) }
+        rv.setTextColor(timeId, primary)
         rv.setTextColor(R.id.temp, primary)
         rv.setTextColor(R.id.date, secondary)
         rv.setTextColor(R.id.condition, secondary)
@@ -111,19 +154,23 @@ object WidgetRenderer {
         val pattern = DateFormat.getBestDateTimePattern(Locale.getDefault(), skeleton)
         rv.setCharSequence(R.id.date, "setFormat12Hour", pattern)
         rv.setCharSequence(R.id.date, "setFormat24Hour", pattern)
-        rv.setCharSequence(R.id.time, "setFormat12Hour", "h:mm")
-        rv.setCharSequence(R.id.time, "setFormat24Hour", "HH:mm")
+        rv.setCharSequence(timeId, "setFormat12Hour", "h:mm")
+        rv.setCharSequence(timeId, "setFormat24Hour", "HH:mm")
 
-        // Clima.
+        // Clima actual.
         val weather = state.weather
+        val days = weather?.let { Forecast.upcoming(it.days) }.orEmpty()
         if (weather != null) {
+            val label = context.getString(WeatherCodes.label(weather.code))
             rv.setTextViewText(R.id.temp, deg(weather.temp))
             rv.setImageViewResource(R.id.wx_icon, WeatherCodes.icon(weather.code, weather.isDay))
+            rv.setContentDescription(R.id.wx_icon, label)
             rv.setViewVisibility(R.id.wx_icon, View.VISIBLE)
-            rv.setTextViewText(R.id.condition, context.getString(WeatherCodes.label(weather.code)))
+            rv.setTextViewText(R.id.condition, label)
             val hilo = if (variant == Variant.SMALL) R.string.hilo_short else R.string.hilo
             rv.setTextViewText(R.id.hilo, context.getString(hilo, deg(weather.max), deg(weather.min)))
-            rv.setViewVisibility(R.id.hilo, View.VISIBLE)
+            val showHilo = variant.showsHilo || (variant.forecastRows > 0 && days.isEmpty())
+            rv.setViewVisibility(R.id.hilo, if (showHilo) View.VISIBLE else View.GONE)
         } else {
             rv.setTextViewText(R.id.temp, context.getString(R.string.temp_unknown))
             rv.setViewVisibility(R.id.wx_icon, View.GONE)
@@ -140,18 +187,55 @@ object WidgetRenderer {
                 if (weather != null && widthDp < 135f) rv.setViewVisibility(R.id.hilo, View.GONE)
             }
             Variant.MEDIUM -> rv.setViewVisibility(R.id.condition, if (roomy) View.VISIBLE else View.GONE)
-            Variant.LARGE -> {
-                rv.setTextColor(R.id.city, primary)
-                rv.setInt(R.id.city_arrow, "setColorFilter", primary)
+            else -> Unit
+        }
+        if (variant.hasCity) {
+            rv.setTextColor(R.id.city, primary)
+            rv.setInt(R.id.city_arrow, "setColorFilter", primary)
+            val place = state.place
+            if (place == null) {
+                rv.setViewVisibility(R.id.city, View.GONE)
+                rv.setViewVisibility(R.id.city_arrow, View.GONE)
+            } else {
+                rv.setTextViewText(R.id.city, place.name.ifBlank { context.getString(R.string.my_location) })
+                rv.setViewVisibility(R.id.city_arrow, if (place.auto) View.VISIBLE else View.GONE)
+            }
+        }
+
+        // Próximos días: "Hoy", "Mañana", "Jue"... con barra de temperatura.
+        if (variant.forecastRows > 0) {
+            val shown = days.take(forecastRowsFor(variant, heightDp))
+            if (variant.hasDivider) {
                 rv.setInt(R.id.divider, "setColorFilter", primary)
-                val place = state.place
-                if (place == null) {
-                    rv.setViewVisibility(R.id.city, View.GONE)
-                    rv.setViewVisibility(R.id.city_arrow, View.GONE)
-                } else {
-                    rv.setTextViewText(R.id.city, place.name.ifBlank { context.getString(R.string.my_location) })
-                    rv.setViewVisibility(R.id.city_arrow, if (place.auto) View.VISIBLE else View.GONE)
+                rv.setViewVisibility(R.id.divider, if (shown.isEmpty()) View.GONE else View.VISIBLE)
+            }
+            val track = if (state.tone == TextTone.DARK) Color.argb(31, 0, 0, 0) else Color.argb(51, 255, 255, 255)
+            val today = shown.firstOrNull()?.takeIf { Forecast.dayLabel(context, it, true) == context.getString(R.string.today) }
+            val current = weather?.temp?.takeIf { today != null }
+            val low = (shown.map { it.min } + listOfNotNull(current)).minOrNull() ?: 0.0
+            val high = (shown.map { it.max } + listOfNotNull(current)).maxOrNull() ?: 1.0
+            ROWS.take(variant.forecastRows).forEachIndexed { i, ids ->
+                val day = shown.getOrNull(i)
+                if (day == null || weather == null) {
+                    rv.setViewVisibility(ids.row, View.GONE)
+                    return@forEachIndexed
                 }
+                rv.setViewVisibility(ids.row, View.VISIBLE)
+                rv.setTextViewText(ids.day, Forecast.dayLabel(context, day, variant.shortDayNames))
+                rv.setTextColor(ids.day, primary)
+                rv.setImageViewResource(ids.icon, WeatherCodes.icon(day.code, isDay = true))
+                rv.setInt(ids.icon, "setColorFilter", primary)
+                rv.setContentDescription(ids.icon, context.getString(WeatherCodes.label(day.code)))
+                rv.setTextViewText(ids.min, deg(day.min))
+                rv.setTextColor(ids.min, tertiary)
+                rv.setTextViewText(ids.max, deg(day.max))
+                rv.setTextColor(ids.max, primary)
+                val bar = RangeBar.bitmap(
+                    (variant.barWidthDp * density).roundToInt(), (12 * density).roundToInt(),
+                    day.min, day.max, low, high, weather.unit, track, 4 * density,
+                    current = if (day === today) current else null,
+                )
+                rv.setImageViewBitmap(ids.bar, bar)
             }
         }
 
@@ -159,7 +243,7 @@ object WidgetRenderer {
         val app = appIntent(context)
         rv.setOnClickPendingIntent(android.R.id.background, app)
         rv.setOnClickPendingIntent(R.id.weather, app)
-        rv.setOnClickPendingIntent(R.id.time, clockIntent(context) ?: app)
+        rv.setOnClickPendingIntent(R.id.time_box, clockIntent(context) ?: app)
         rv.setOnClickPendingIntent(R.id.date, calendarIntent(context) ?: app)
         return rv
     }

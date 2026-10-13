@@ -16,8 +16,8 @@ object OpenMeteo {
             Locale.US,
             "https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f" +
                 "&current=temperature_2m,weather_code,is_day" +
-                "&daily=temperature_2m_max,temperature_2m_min" +
-                "&timezone=auto&forecast_days=1&temperature_unit=%s",
+                "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
+                "&timezone=auto&forecast_days=6&temperature_unit=%s",
             lat, lon, unit.apiName,
         )
         parseForecast(get(url), unit)
@@ -27,6 +27,22 @@ object OpenMeteo {
         val json = JSONObject(body)
         val current = json.getJSONObject("current")
         val daily = json.getJSONObject("daily")
+        val dates = daily.getJSONArray("time")
+        val codes = daily.optJSONArray("weather_code")
+        val maxes = daily.getJSONArray("temperature_2m_max")
+        val mins = daily.getJSONArray("temperature_2m_min")
+        val rain = daily.optJSONArray("precipitation_probability_max")
+        val days = (0 until dates.length()).mapNotNull { i ->
+            // Open-Meteo devuelve null en los días que todavía no tienen datos.
+            if (maxes.isNull(i) || mins.isNull(i)) return@mapNotNull null
+            DayForecast(
+                date = dates.getString(i),
+                code = codes?.optInt(i, 3) ?: 3,
+                max = maxes.getDouble(i),
+                min = mins.getDouble(i),
+                precip = rain?.takeUnless { it.isNull(i) }?.optInt(i) ?: 0,
+            )
+        }
         return Weather(
             temp = current.getDouble("temperature_2m"),
             code = current.getInt("weather_code"),
@@ -35,6 +51,7 @@ object OpenMeteo {
             min = daily.getJSONArray("temperature_2m_min").getDouble(0),
             unit = unit,
             updatedAt = now,
+            days = days,
         )
     }
 

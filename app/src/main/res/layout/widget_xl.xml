@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 5×3 o más: hora, clima actual con ciudad y pronóstico de 5 días. -->
+<!-- Generado por tools/gen_widget_layouts.py: no editar a mano. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_outline"
+    android:clipToOutline="true">
+
+    <ImageView
+        android:id="@+id/glass"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:scaleType="fitXY"
+        android:src="@drawable/glass_fallback" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextClock
+                android:id="@+id/date"
+                style="@style/WidgetText.Date"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:layout_weight="1" />
+
+            <TextView
+                android:id="@+id/city"
+                style="@style/WidgetText.Temp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_city"
+                android:textSize="13sp"
+                android:layout_marginStart="8dp" />
+
+            <ImageView
+                android:id="@+id/city_arrow"
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginStart="4dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_location_arrow" />
+        </LinearLayout>
+
+        <include
+            layout="@layout/widget_time"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:id="@+id/weather"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/wx_icon"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_wx_sun" />
+
+            <TextView
+                android:id="@+id/temp"
+                style="@style/WidgetText.Temp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_temp"
+                android:textSize="22sp"
+                android:layout_marginStart="6dp" />
+
+            <TextView
+                android:id="@+id/condition"
+                style="@style/WidgetText.Secondary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_condition"
+                android:textSize="14sp"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp" />
+
+            <TextView
+                android:id="@+id/hilo"
+                style="@style/WidgetText.Tertiary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_hilo"
+                android:textSize="13sp"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/divider"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="6dp"
+            android:alpha="0.2"
+            android:importantForAccessibility="no"
+            android:scaleType="fitXY"
+            android:src="@drawable/hairline" />
+
+        <LinearLayout
+            android:id="@+id/f0_row"
+            android:layout_width="match_parent"
+            android:layout_height="26dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/f0_day"
+                style="@style/WidgetText.Secondary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_day"
+                android:textSize="15sp"
+                android:layout_weight="1" />
+
+            <ImageView
+                android:id="@+id/f0_icon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_wx_sun" />
+
+            <TextView
+                android:id="@+id/f0_min"
+                style="@style/WidgetText.Tertiary"
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_min"
+                android:textSize="15sp"
+                android:gravity="end" />
+
+            <ImageView
+                android:id="@+id/f0_bar"
+                android:layout_width="100dp"
+                android:layout_height="12dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp"
+                android:importantForAccessibility="no"
+                android:scaleType="fitXY"
+                android:src="@drawable/range_bar_sample" />
+
+            <TextView
+                android:id="@+id/f0_max"
+                style="@style/WidgetText.Temp"
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_max"
+                android:textSize="15sp"
+                android:gravity="end" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/f1_row"
+            android:layout_width="match_parent"
+            android:layout_height="26dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/f1_day"
+                style="@style/WidgetText.Secondary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_day"
+                android:textSize="15sp"
+                android:layout_weight="1" />
+
+            <ImageView
+                android:id="@+id/f1_icon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_wx_sun" />
+
+            <TextView
+                android:id="@+id/f1_min"
+                style="@style/WidgetText.Tertiary"
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_min"
+                android:textSize="15sp"
+                android:gravity="end" />
+
+            <ImageView
+                android:id="@+id/f1_bar"
+                android:layout_width="100dp"
+                android:layout_height="12dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp"
+                android:importantForAccessibility="no"
+                android:scaleType="fitXY"
+                android:src="@drawable/range_bar_sample" />
+
+            <TextView
+                android:id="@+id/f1_max"
+                style="@style/WidgetText.Temp"
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_max"
+                android:textSize="15sp"
+                android:gravity="end" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/f2_row"
+            android:layout_width="match_parent"
+            android:layout_height="26dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/f2_day"
+                style="@style/WidgetText.Secondary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_day"
+                android:textSize="15sp"
+                android:layout_weight="1" />
+
+            <ImageView
+                android:id="@+id/f2_icon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_wx_sun" />
+
+            <TextView
+                android:id="@+id/f2_min"
+                style="@style/WidgetText.Tertiary"
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_min"
+                android:textSize="15sp"
+                android:gravity="end" />
+
+            <ImageView
+                android:id="@+id/f2_bar"
+                android:layout_width="100dp"
+                android:layout_height="12dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp"
+                android:importantForAccessibility="no"
+                android:scaleType="fitXY"
+                android:src="@drawable/range_bar_sample" />
+
+            <TextView
+                android:id="@+id/f2_max"
+                style="@style/WidgetText.Temp"
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_max"
+                android:textSize="15sp"
+                android:gravity="end" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/f3_row"
+            android:layout_width="match_parent"
+            android:layout_height="26dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/f3_day"
+                style="@style/WidgetText.Secondary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_day"
+                android:textSize="15sp"
+                android:layout_weight="1" />
+
+            <ImageView
+                android:id="@+id/f3_icon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_wx_sun" />
+
+            <TextView
+                android:id="@+id/f3_min"
+                style="@style/WidgetText.Tertiary"
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_min"
+                android:textSize="15sp"
+                android:gravity="end" />
+
+            <ImageView
+                android:id="@+id/f3_bar"
+                android:layout_width="100dp"
+                android:layout_height="12dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp"
+                android:importantForAccessibility="no"
+                android:scaleType="fitXY"
+                android:src="@drawable/range_bar_sample" />
+
+            <TextView
+                android:id="@+id/f3_max"
+                style="@style/WidgetText.Temp"
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_max"
+                android:textSize="15sp"
+                android:gravity="end" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/f4_row"
+            android:layout_width="match_parent"
+            android:layout_height="26dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/f4_day"
+                style="@style/WidgetText.Secondary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_day"
+                android:textSize="15sp"
+                android:layout_weight="1" />
+
+            <ImageView
+                android:id="@+id/f4_icon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_wx_sun" />
+
+            <TextView
+                android:id="@+id/f4_min"
+                style="@style/WidgetText.Tertiary"
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_min"
+                android:textSize="15sp"
+                android:gravity="end" />
+
+            <ImageView
+                android:id="@+id/f4_bar"
+                android:layout_width="100dp"
+                android:layout_height="12dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="4dp"
+                android:importantForAccessibility="no"
+                android:scaleType="fitXY"
+                android:src="@drawable/range_bar_sample" />
+
+            <TextView
+                android:id="@+id/f4_max"
+                style="@style/WidgetText.Temp"
+                android:layout_width="36dp"
+                android:layout_height="wrap_content"
+                android:text="@string/sample_max"
+                android:textSize="15sp"
+                android:gravity="end" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

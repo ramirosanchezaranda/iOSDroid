@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mantener presionado el ícono de iOSDroid → "Modo reloj". -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutId="clock_mode"
+        android:shortcutLongLabel="@string/clock_mode_long"
+        android:shortcutShortLabel="@string/clock_mode">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="com.ramiro.iosdroid.ClockActivity"
+            android:targetPackage="com.ramiro.iosdroid" />
+    </shortcut>
+</shortcuts>

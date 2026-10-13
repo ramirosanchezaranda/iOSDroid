@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Perilla blanca de 27 dp con sombra suave, dentro de un círculo de 31 dp. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:bottom="1dp" android:left="2dp" android:right="2dp" android:top="3dp">
+        <shape android:shape="oval">
+            <solid android:color="#26000000" />
+            <size android:width="27dp" android:height="27dp" />
+        </shape>
+    </item>
+    <item android:bottom="2dp" android:left="2dp" android:right="2dp" android:top="2dp">
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFFFF" />
+            <size android:width="27dp" android:height="27dp" />
+        </shape>
+    </item>
+</layer-list>
