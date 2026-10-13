@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/scroll"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/ios_bg"
+    android:clipToPadding="false"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:id="@+id/content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="32dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:fontFamily="sans-serif"
+            android:paddingStart="4dp"
+            android:text="@string/title"
+            android:textColor="@color/ios_label"
+            android:textSize="34sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:paddingStart="4dp"
+            android:text="@string/subtitle"
+            android:textColor="@color/ios_secondary"
+            android:textSize="15sp" />
+
+        <!-- Vista previa sobre un fondo de pantalla de ejemplo -->
+        <FrameLayout
+            android:id="@+id/preview_wall"
+            android:layout_width="match_parent"
+            android:layout_height="260dp"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/preview_frame"
+            android:clipToOutline="true">
+
+            <FrameLayout
+                android:id="@+id/preview_slot"
+                android:layout_width="230dp"
+                android:layout_height="196dp"
+                android:layout_gravity="center" />
+
+            <View
+                android:id="@+id/preview_touch"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="?android:attr/selectableItemBackground"
+                android:contentDescription="@string/preview_hint" />
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:text="@string/preview_hint"
+            android:textColor="@color/ios_secondary"
+            android:textSize="12sp" />
+
+        <LinearLayout
+            android:id="@+id/seg_size"
+            style="@style/Segmented"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="0dp" />
+
+        <TextView
+            android:id="@+id/pin"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/pill_button"
+            android:fontFamily="sans-serif"
+            android:gravity="center"
+            android:text="@string/add_to_home"
+            android:textFontWeight="500"
+            android:textColor="#FFFFFFFF"
+            android:textSize="17sp" />
+
+        <TextView
+            style="@style/SectionHeader"
+            android:text="@string/section_glass" />
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout
+                android:id="@+id/seg_glass"
+                style="@style/Segmented" />
+        </LinearLayout>
+
+        <TextView
+            style="@style/SectionHeader"
+            android:text="@string/section_text" />
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout
+                android:id="@+id/seg_text"
+                style="@style/Segmented" />
+        </LinearLayout>
+
+        <TextView
+            style="@style/SectionHeader"
+            android:text="@string/section_location" />
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:minHeight="50dp"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/city"
+                    android:textColor="@color/ios_label"
+                    android:textSize="17sp" />
+
+                <TextView
+                    android:id="@+id/city_value"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="12dp"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:gravity="end"
+                    android:singleLine="true"
+                    android:text="@string/not_set"
+                    android:textColor="@color/ios_secondary"
+                    android:textSize="17sp" />
+            </LinearLayout>
+
+            <View style="@style/Separator" />
+
+            <TextView
+                android:id="@+id/use_location"
+                style="@style/Row"
+                android:text="@string/use_my_location"
+                android:textColor="@color/ios_blue" />
+
+            <View style="@style/Separator" />
+
+            <EditText
+                android:id="@+id/search"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:background="@null"
+                android:hint="@string/search_city_hint"
+                android:imeOptions="actionSearch"
+                android:importantForAutofill="no"
+                android:inputType="textCapWords"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:singleLine="true"
+                android:textColor="@color/ios_label"
+                android:textColorHint="@color/ios_secondary"
+                android:textSize="17sp" />
+
+            <LinearLayout
+                android:id="@+id/results"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <View style="@style/Separator" />
+
+            <TextView
+                android:id="@+id/refresh"
+                style="@style/Row"
+                android:text="@string/refresh_now"
+                android:textColor="@color/ios_blue" />
+        </LinearLayout>
+
+        <TextView
+            style="@style/SectionHeader"
+            android:text="@string/section_units" />
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout
+                android:id="@+id/seg_unit"
+                style="@style/Segmented" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:text="@string/status_never"
+            android:textColor="@color/ios_secondary"
+            android:textSize="13sp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:text="@string/footer"
+            android:textColor="@color/ios_secondary"
+            android:textSize="13sp" />
+    </LinearLayout>
+</ScrollView>

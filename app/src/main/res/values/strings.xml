@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">iOSDroid</string>
+    <string name="widget_name">Reloj Glass</string>
+    <string name="widget_description">Hora, fecha y clima con efecto vidrio</string>
+
+    <!-- Valores de ejemplo para la vista previa del selector de widgets -->
+    <string name="sample_temp">22°</string>
+    <string name="sample_condition">Despejado</string>
+    <string name="sample_hilo">Máx. 25°  Mín. 14°</string>
+    <string name="sample_hilo_short">↑25° ↓14°</string>
+    <string name="sample_city">Buenos Aires</string>
+
+    <string name="temp_unknown">--°</string>
+    <string name="tap_to_setup">Toca para configurar</string>
+    <string name="updating">Actualizando…</string>
+    <string name="hilo">Máx. %1$s  Mín. %2$s</string>
+    <string name="hilo_short">↑%1$s ↓%2$s</string>
+
+    <!-- Códigos WMO de Open-Meteo -->
+    <string name="wx_clear">Despejado</string>
+    <string name="wx_mainly_clear">Algo nublado</string>
+    <string name="wx_partly">Parcialmente nublado</string>
+    <string name="wx_overcast">Nublado</string>
+    <string name="wx_fog">Niebla</string>
+    <string name="wx_drizzle">Llovizna</string>
+    <string name="wx_freezing_drizzle">Llovizna helada</string>
+    <string name="wx_rain_light">Lluvia débil</string>
+    <string name="wx_rain">Lluvia</string>
+    <string name="wx_rain_heavy">Lluvia fuerte</string>
+    <string name="wx_freezing_rain">Lluvia helada</string>
+    <string name="wx_snow">Nieve</string>
+    <string name="wx_snow_grains">Nieve granulada</string>
+    <string name="wx_showers">Chaparrones</string>
+    <string name="wx_showers_heavy">Chaparrones fuertes</string>
+    <string name="wx_snow_showers">Nevadas</string>
+    <string name="wx_thunder">Tormenta</string>
+    <string name="wx_thunder_hail">Tormenta con granizo</string>
+
+    <!-- App -->
+    <string name="title">Reloj Glass</string>
+    <string name="subtitle">Hora, fecha y clima con efecto vidrio para tu pantalla de inicio.</string>
+    <string name="preview_hint">Toca la vista previa para cambiar el fondo</string>
+    <string name="add_to_home">Añadir a la pantalla de inicio</string>
+    <string name="add_manually">Mantén presionado un espacio libre del inicio → Widgets → iOSDroid → Reloj Glass.</string>
+    <string name="section_size">Tamaño de la vista previa</string>
+    <string name="size_small">Pequeño</string>
+    <string name="size_medium">Mediano</string>
+    <string name="size_large">Grande</string>
+    <string name="section_glass">Vidrio</string>
+    <string name="glass_clear">Transparente</string>
+    <string name="glass_frosted">Esmerilado</string>
+    <string name="glass_dark">Ahumado</string>
+    <string name="section_text">Color del texto</string>
+    <string name="text_auto">Automático</string>
+    <string name="text_light">Blanco</string>
+    <string name="text_dark">Negro</string>
+    <string name="section_location">Ubicación del clima</string>
+    <string name="city">Ciudad</string>
+    <string name="not_set">Sin configurar</string>
+    <string name="use_my_location">Usar mi ubicación actual</string>
+    <string name="locating">Buscando tu ubicación…</string>
+    <string name="location_failed">No se pudo obtener la ubicación. Activa el GPS o busca tu ciudad.</string>
+    <string name="location_denied">Sin permiso de ubicación. Puedes buscar tu ciudad a mano.</string>
+    <string name="my_location">Mi ubicación</string>
+    <string name="search_city_hint">Buscar otra ciudad…</string>
+    <string name="searching">Buscando…</string>
+    <string name="no_results">Sin resultados</string>
+    <string name="network_error">Sin conexión. Inténtalo de nuevo.</string>
+    <string name="refresh_now">Actualizar clima ahora</string>
+    <string name="refreshing">Actualizando el clima…</string>
+    <string name="section_units">Unidades</string>
+    <string name="celsius">Celsius (°C)</string>
+    <string name="fahrenheit">Fahrenheit (°F)</string>
+    <string name="status_never">Todavía no hay datos del clima.</string>
+    <string name="status_updated">Clima actualizado a las %1$s · %2$s</string>
+    <string name="footer">Toca la hora para abrir las alarmas, la fecha para abrir el calendario y el clima para volver acá.\n\nSi el clima deja de actualizarse, en Ajustes → Batería permite que iOSDroid funcione en segundo plano.\n\nDatos del clima: Open-Meteo.com (CC BY 4.0).</string>
+</resources>

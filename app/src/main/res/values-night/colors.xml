@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ios_bg">#FF000000</color>
+    <color name="ios_card">#FF1C1C1E</color>
+    <color name="ios_label">#FFFFFFFF</color>
+    <color name="ios_secondary">#99EBEBF5</color>
+    <color name="ios_separator">#A6545458</color>
+    <color name="ios_blue">#FF0A84FF</color>
+    <color name="ios_seg_track">#3D767680</color>
+    <color name="ios_seg_thumb">#FF636366</color>
+    <color name="ios_seg_thumb_stroke">#00000000</color>
+</resources>

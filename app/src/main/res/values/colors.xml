@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Paleta de sistema estilo iOS (modo claro) -->
+    <color name="ios_bg">#FFF2F2F7</color>
+    <color name="ios_card">#FFFFFFFF</color>
+    <color name="ios_label">#FF000000</color>
+    <color name="ios_secondary">#993C3C43</color>
+    <color name="ios_separator">#4A3C3C43</color>
+    <color name="ios_blue">#FF007AFF</color>
+    <color name="ios_seg_track">#1F767680</color>
+    <color name="ios_seg_thumb">#FFFFFFFF</color>
+    <color name="ios_seg_thumb_stroke">#0F000000</color>
+
+    <!-- Texto del widget -->
+    <color name="widget_text">#FFFFFFFF</color>
+    <color name="widget_text_secondary">#D9FFFFFF</color>
+    <color name="widget_text_tertiary">#A6FFFFFF</color>
+    <color name="widget_shadow">#33000000</color>
+</resources>

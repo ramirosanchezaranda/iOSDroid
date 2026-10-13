@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.IOSDroid" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/ios_bg</item>
+        <item name="android:colorAccent">@color/ios_blue</item>
+        <item name="android:colorPrimary">@color/ios_bg</item>
+        <item name="android:textColorPrimary">@color/ios_label</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <style name="SectionHeader">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:layout_marginTop">26dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="android:textColor">@color/ios_secondary</item>
+    </style>
+
+    <style name="Card">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/card_bg</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="Row">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">50dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:textSize">17sp</item>
+        <item name="android:textColor">@color/ios_label</item>
+        <item name="android:background">?android:attr/selectableItemBackground</item>
+    </style>
+
+    <style name="Separator">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">0.5dp</item>
+        <item name="android:layout_marginStart">16dp</item>
+        <item name="android:background">@color/ios_separator</item>
+    </style>
+
+    <style name="Segmented">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">36dp</item>
+        <item name="android:layout_margin">8dp</item>
+        <item name="android:padding">2dp</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:background">@drawable/seg_track</item>
+    </style>
+
+    <!-- Estilos del widget.
+         Se usa la familia del sistema ("sans-serif") con un peso, en lugar de variantes como
+         "sans-serif-light": así el widget toma la fuente que elegiste en el teléfono
+         (OPPO Sans en ColorOS) también en los pesos fino y medio. -->
+    <style name="WidgetText">
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:textColor">@color/widget_text</item>
+        <item name="android:shadowColor">@color/widget_shadow</item>
+        <item name="android:shadowRadius">6</item>
+        <item name="android:shadowDy">1</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="WidgetText.Time">
+        <item name="android:textFontWeight">300</item>
+        <item name="android:letterSpacing">-0.02</item>
+        <item name="android:fontFeatureSettings">tnum</item>
+        <item name="android:ellipsize">none</item>
+        <item name="android:autoSizeTextType">uniform</item>
+        <item name="android:autoSizeMinTextSize">24sp</item>
+        <item name="android:autoSizeStepGranularity">1sp</item>
+        <item name="android:format12Hour">h:mm</item>
+        <item name="android:format24Hour">HH:mm</item>
+    </style>
+
+    <style name="WidgetText.Date">
+        <item name="android:textFontWeight">500</item>
+        <item name="android:textColor">@color/widget_text_secondary</item>
+        <item name="android:format12Hour">EEEE d MMMM</item>
+        <item name="android:format24Hour">EEEE d MMMM</item>
+    </style>
+
+    <style name="WidgetText.Temp">
+        <item name="android:textFontWeight">500</item>
+    </style>
+
+    <style name="WidgetText.TempLight">
+        <item name="android:textFontWeight">300</item>
+    </style>
+
+    <style name="WidgetText.Secondary">
+        <item name="android:textFontWeight">500</item>
+        <item name="android:textColor">@color/widget_text_secondary</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="WidgetText.Tertiary">
+        <item name="android:textColor">@color/widget_text_tertiary</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+</resources>
