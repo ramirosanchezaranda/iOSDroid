@@ -119,8 +119,9 @@ class LockClockTest {
             val activity = open().get()
             val root = activity.findViewById<android.view.View>(R.id.clock_root)
             assertEquals(android.view.View.VISIBLE, activity.findViewById<android.view.View>(R.id.ss_unlock_hint).visibility)
-            val down = android.view.MotionEvent.obtain(0, 0, android.view.MotionEvent.ACTION_DOWN, 100f, 400f, 0)
-            root.dispatchTouchEvent(down)
+            // Un toque (apoyar y soltar) pide la huella / PIN.
+            root.dispatchTouchEvent(android.view.MotionEvent.obtain(0, 0, android.view.MotionEvent.ACTION_DOWN, 100f, 400f, 0))
+            root.dispatchTouchEvent(android.view.MotionEvent.obtain(0, 60, android.view.MotionEvent.ACTION_UP, 100f, 400f, 0))
             shadowOf(Looper.getMainLooper()).idle()
             // Se pidió el desbloqueo: el reloj sigue hasta que el usuario se desbloquea (huella / PIN)...
             assertFalse(activity.isFinishing)
@@ -130,6 +131,51 @@ class LockClockTest {
             assertTrue(activity.isFinishing)
         } finally {
             keyguard.setKeyguardLocked(false)
+        }
+    }
+
+    @Test
+    fun restingTheFingerOpensUnlock() {
+        val keyguard = shadowOf(ctx.getSystemService(android.app.KeyguardManager::class.java))
+        keyguard.setKeyguardLocked(true)
+        try {
+            val activity = open().get()
+            val root = activity.findViewById<android.view.View>(R.id.clock_root)
+            root.dispatchTouchEvent(android.view.MotionEvent.obtain(0, 0, android.view.MotionEvent.ACTION_DOWN, 100f, 400f, 0))
+            shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(300))
+            keyguard.setKeyguardLocked(false)
+            shadowOf(Looper.getMainLooper()).idle()
+            assertTrue(activity.isFinishing)
+        } finally {
+            keyguard.setKeyguardLocked(false)
+        }
+    }
+
+    @Test
+    fun swipingUpOpensNotificationCenterAndBackClosesIt() {
+        val now = System.currentTimeMillis()
+        NotificationsHub.publish(listOf(
+            NotifItem("a", "com.whatsapp", "WhatsApp", "Ana", "hola", now, null, false, true, null),
+            NotifItem("b", "com.whatsapp", "WhatsApp", "Pedro", "llego en 5", now - 60_000, null, false, true, null),
+        ))
+        shadowOf(Looper.getMainLooper()).idle()
+        try {
+            val activity = open().get()
+            val root = activity.findViewById<android.view.View>(R.id.clock_root)
+            fun ev(action: Int, y: Float, t: Long) = android.view.MotionEvent.obtain(0, t, action, 200f, y, 0)
+            root.dispatchTouchEvent(ev(android.view.MotionEvent.ACTION_DOWN, 1200f, 0))
+            for (i in 1..10) root.dispatchTouchEvent(ev(android.view.MotionEvent.ACTION_MOVE, 1200f - i * 80f, i * 16L))
+            root.dispatchTouchEvent(ev(android.view.MotionEvent.ACTION_UP, 400f, 170))
+            shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(1))
+            assertTrue(activity.notificationsUi!!.centerOpen)
+            assertFalse(activity.isFinishing)
+            activity.onBackPressedDispatcher.onBackPressed()
+            shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(1))
+            assertFalse(activity.notificationsUi!!.centerOpen)
+            assertFalse(activity.isFinishing)
+        } finally {
+            NotificationsHub.publish(emptyList())
+            shadowOf(Looper.getMainLooper()).idle()
         }
     }
 

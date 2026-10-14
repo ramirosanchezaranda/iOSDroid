@@ -35,12 +35,23 @@ Widget para la pantalla de inicio de Android con **hora, fecha y clima**, con es
   "tocar y apoyar el dedo". Se cierra solo al desbloquear. Funciona con un servicio en primer
   plano que escucha el apagado de pantalla y una notificación de pantalla completa (como las alarmas); se reactiva
   solo al reiniciar el teléfono.
-- **Notificaciones en el reloj** (como la pantalla de bloqueo del iPhone): tarjetas abajo del reloj con ícono, título,
-  texto y "ahora / hace 5 min", apiladas cuando hay muchas. Tocar abre la app (pide desbloquear si hace falta) y
-  deslizar hacia un costado la borra. Con el teléfono bloqueado se respeta el contenido privado de cada app, y se
-  puede ocultar todo el texto. Requiere dar acceso a las notificaciones. Si Android dice "A la app se le negó el
-  acceso" / "Ajuste restringido" (apps instaladas desde un APK): Información de la app → ⋮ → *Permitir ajustes
-  restringidos*, y después volver a dar el acceso. La app muestra estos pasos con botones directos.
+- **Notificaciones en el reloj**, con los gestos del iPhone y lo bueno de Android:
+  - Agrupadas por app en pilas, con "ahora / hace 5 min". Tocar una notificación la abre (pide desbloquear si hace
+    falta); tocar una pila la despliega.
+  - Deslizar hacia arriba abre el **centro de notificaciones**: todas, con scroll, "Mostrar menos" y "Borrar todo"
+    (✕ y confirmar). Hacia abajo, tocar un espacio vacío o Atrás lo cierra.
+  - Deslizar hacia la izquierda muestra **Opciones** y **Borrar** (hasta el final, borra; en una pila, borra toda la
+    app). Hacia la derecha, abre.
+  - Mantener presionada la **amplía**: texto completo, imagen, los botones de la app (por ejemplo "Marcar como
+    leído"), **responder sin abrir la app** y copiar el texto.
+  - Opciones: posponer 15 min / 1 h / hasta mañana (vuelven solas), silenciar la app en el reloj por 1 hora y
+    ajustes de notificaciones de la app.
+  - Con el teléfono bloqueado se respeta lo elegido en Ajustes de Android para la pantalla de bloqueo (y se puede
+    ocultar todo el texto desde iOSDroid). Fondo desenfocado detrás de los paneles en Android 12+, vibración al
+    confirmar y sin animaciones si están desactivadas en el sistema.
+  - Requiere dar acceso a las notificaciones. Si Android dice "A la app se le negó el acceso" / "Ajuste
+    restringido" (apps instaladas desde un APK): Información de la app → ⋮ → *Permitir ajustes restringidos*, y
+    después volver a dar el acceso. La app muestra estos pasos con botones directos.
 - **Protector de pantalla del sistema** (*Reloj Glass*): se activa solo mientras el teléfono carga. En ColorOS el menú
   está oculto; el botón de la app abre esa pantalla de Ajustes directamente.
 - Para cuidar la pantalla, el contenido se mueve un poco cada minuto (sin animación si está activado "Reducir movimiento").

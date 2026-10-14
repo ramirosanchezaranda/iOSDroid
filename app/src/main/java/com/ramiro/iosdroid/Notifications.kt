@@ -13,6 +13,18 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationManagerCompat
 
+/** Un botón de la notificación ("Responder", "Marcar como leído"...). */
+data class NotifAction(
+    val title: String,
+    val intent: PendingIntent,
+    /** Si tiene campos de texto, se puede responder desde el reloj (algo que el iPhone no deja con todas las apps). */
+    val remoteInputs: List<android.app.RemoteInput>,
+    /** La app pide desbloquear antes de ejecutarla. */
+    val needsUnlock: Boolean,
+) {
+    val isReply get() = remoteInputs.any { it.allowFreeFormInput }
+}
+
 /** Una notificación lista para mostrar en el reloj, como en la pantalla de bloqueo del iPhone. */
 data class NotifItem(
     val key: String,
@@ -27,6 +39,11 @@ data class NotifItem(
     val private: Boolean,
     val autoCancel: Boolean,
     val contentIntent: PendingIntent?,
+    val actions: List<NotifAction> = emptyList(),
+    /** Imagen grande (BigPictureStyle), si la tiene. */
+    val picture: android.graphics.Bitmap? = null,
+    /** Se puede borrar (las persistentes ya se filtran, pero algunas apps no dejan borrar). */
+    val clearable: Boolean = true,
 ) {
     /** Ícono de la app (se carga al dibujar, no se guarda en el modelo). */
     fun icon(context: Context): Drawable? = runCatching { context.packageManager.getApplicationIcon(packageName) }.getOrNull()
@@ -43,10 +60,17 @@ object NotificationsHub {
         private set
 
     fun publish(list: List<NotifItem>) {
-        main.post {
-            items = list
-            listeners.toList().forEach { it(list) }
-        }
+        main.post { publishNow(list) }
+    }
+
+    private fun publishNow(list: List<NotifItem>) {
+        items = list
+        listeners.toList().forEach { it(list) }
+    }
+
+    /** Las saca de la lista ya mismo (sin esperar al sistema); se filtra sobre la lista vigente al publicar. */
+    private fun remove(keys: Set<String>) {
+        main.post { publishNow(items.filter { it.key !in keys }) }
     }
 
     fun listen(listener: (List<NotifItem>) -> Unit) {
@@ -102,7 +126,86 @@ object NotificationsHub {
             private = n.visibility == Notification.VISIBILITY_PRIVATE,
             autoCancel = n.flags and Notification.FLAG_AUTO_CANCEL != 0,
             contentIntent = n.contentIntent,
+            actions = n.actions.orEmpty().mapNotNull { a ->
+                val intent = a.actionIntent ?: return@mapNotNull null
+                val title = a.title?.toString()?.trim().orEmpty()
+                if (title.isBlank()) return@mapNotNull null
+                NotifAction(
+                    title = title,
+                    intent = intent,
+                    remoteInputs = a.remoteInputs.orEmpty().toList(),
+                    needsUnlock = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && a.isAuthenticationRequired,
+                )
+            },
+            picture = runCatching {
+                if (Build.VERSION.SDK_INT >= 33) {
+                    extras.getParcelable(Notification.EXTRA_PICTURE, android.graphics.Bitmap::class.java)
+                } else {
+                    @Suppress("DEPRECATION")
+                    extras.getParcelable(Notification.EXTRA_PICTURE) as? android.graphics.Bitmap
+                }
+            }.getOrNull(),
+            clearable = n.flags and Notification.FLAG_NO_CLEAR == 0,
         )
+    }
+
+    /** Agrupadas por app, como las pilas del iPhone (la app con la más reciente, primero). */
+    fun groups(items: List<NotifItem>): List<List<NotifItem>> =
+        items.sortedByDescending { it.postTime }.groupBy { it.packageName }.values.toList()
+
+    /** Sin las apps que se ocultaron del reloj por un rato. */
+    fun visible(context: Context, items: List<NotifItem>, now: Long = System.currentTimeMillis()): List<NotifItem> {
+        val muted = Prefs(context).mutedApps(now)
+        return items.filter { it.packageName !in muted }
+    }
+
+    /** Responde desde el reloj (como en la barra de notificaciones de Android). */
+    fun reply(context: Context, action: NotifAction, text: String) {
+        val results = android.os.Bundle()
+        action.remoteInputs.forEach { results.putCharSequence(it.resultKey, text) }
+        val fill = android.content.Intent()
+        android.app.RemoteInput.addResultsToIntent(action.remoteInputs.toTypedArray(), fill, results)
+        runCatching { send(context, action.intent, fill) }
+    }
+
+    fun runAction(context: Context, action: NotifAction) {
+        runCatching { send(context, action.intent, null) }
+    }
+
+    /** Posponer: las notificaciones vuelven solas más tarde (función de Android que el iPhone no tiene). */
+    fun snooze(group: List<NotifItem>, millis: Long) {
+        val service = NotificationsService.instance
+        group.forEach { item -> service?.let { runCatching { it.snoozeNotification(item.key, millis) } } }
+        remove(group.map { it.key }.toSet())
+    }
+
+    fun dismissAll(group: List<NotifItem>) {
+        val keys = group.filter { it.clearable }.map { it.key }.toSet()
+        if (keys.isEmpty()) return
+        NotificationsService.instance?.let { runCatching { it.cancelNotifications(keys.toTypedArray()) } }
+        remove(keys)
+    }
+
+    /** "Borrar todo" (lo que se ve en el reloj). */
+    fun clearAll(shown: List<NotifItem> = items) {
+        dismissAll(shown)
+    }
+
+    /** Ocultar una app del reloj por un rato (no cambia nada en el sistema). */
+    fun muteApp(context: Context, packageName: String, millis: Long) {
+        Prefs(context).muteApp(packageName, System.currentTimeMillis() + millis)
+        main.post { publishNow(items) }
+    }
+
+    private fun send(context: Context, intent: PendingIntent, fill: android.content.Intent?) {
+        if (Build.VERSION.SDK_INT >= 34) {
+            // Android 14+: hay que ceder el permiso de abrir pantallas a la app de la notificación.
+            val options = ActivityOptions.makeBasic()
+                .setPendingIntentBackgroundActivityStartMode(ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
+            intent.send(context, 0, fill, null, null, null, options.toBundle())
+        } else {
+            intent.send(context, 0, fill)
+        }
     }
 
     /** En chats (MessagingStyle), el último mensaje. */
@@ -122,22 +225,13 @@ object NotificationsHub {
     /** Abre la app de la notificación (como tocarla en la barra). */
     fun open(context: Context, item: NotifItem) {
         val intent = item.contentIntent ?: return
-        runCatching {
-            if (Build.VERSION.SDK_INT >= 34) {
-                // Android 14+: hay que ceder el permiso de abrir pantallas a la app de la notificación.
-                val options = ActivityOptions.makeBasic()
-                    .setPendingIntentBackgroundActivityStartMode(ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
-                intent.send(context, 0, null, null, null, null, options.toBundle())
-            } else {
-                intent.send()
-            }
-        }
+        runCatching { send(context, intent, null) }
         if (item.autoCancel) dismiss(item)
     }
 
     fun dismiss(item: NotifItem) {
         NotificationsService.instance?.let { runCatching { it.cancelNotification(item.key) } }
-        publish(items.filter { it.key != item.key })
+        remove(setOf(item.key))
     }
 }
 

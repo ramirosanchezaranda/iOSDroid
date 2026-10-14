@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Modo reloj / protector de pantalla, vertical: fecha, hora gigante y clima; notificaciones abajo (como el iPhone). -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.ramiro.iosdroid.DragFrame xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/clock_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -141,5 +141,9 @@
         android:text="@string/clock_unlock_hint"
         android:textColor="#A6FFFFFF"
         android:textSize="12sp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:maxLines="2"
+        android:textAlignment="center"
         android:visibility="gone" />
-</FrameLayout>
+</com.ramiro.iosdroid.DragFrame>

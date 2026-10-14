@@ -106,6 +106,7 @@
             android:showWhenLocked="true"
             android:taskAffinity="com.ramiro.iosdroid.clock"
             android:excludeFromRecents="true"
+            android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.IOSDroid.Clock" />
 
         <!-- Escucha el apagado de pantalla (reloj al bloquear) y los minutos (hora del widget con fuente propia). -->

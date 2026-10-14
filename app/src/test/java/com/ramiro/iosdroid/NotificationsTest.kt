@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.NotificationManager
 import android.app.Person
 import android.content.Context
+import android.content.Intent
 import android.os.Looper
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -79,5 +80,60 @@ class NotificationsTest {
         NotificationsHub.dismiss(a)
         shadowOf(Looper.getMainLooper()).idle()
         assertEquals(listOf("b"), NotificationsHub.items.map { it.key })
+    }
+
+    @Test
+    fun groupsByAppNewestFirst() {
+        val base = item(builder().setContentTitle("A").setContentText("uno").build())!!
+        val list = listOf(
+            base.copy(key = "1", packageName = "a", postTime = 10),
+            base.copy(key = "2", packageName = "b", postTime = 30),
+            base.copy(key = "3", packageName = "a", postTime = 20),
+        )
+        assertEquals(listOf(listOf("2"), listOf("3", "1")), NotificationsHub.groups(list).map { g -> g.map { it.key } })
+    }
+
+    @Test
+    fun snoozeAndDismissAllRemoveTheWholeGroup() {
+        val base = item(builder().setContentTitle("A").setContentText("uno").build())!!
+        val a = base.copy(key = "a"); val b = base.copy(key = "b"); val c = base.copy(key = "c", packageName = "otra")
+        NotificationsHub.publish(listOf(a, b, c))
+        shadowOf(Looper.getMainLooper()).idle()
+        NotificationsHub.snooze(listOf(a, b), 60_000)
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(listOf("c"), NotificationsHub.items.map { it.key })
+        NotificationsHub.dismissAll(listOf(c))
+        shadowOf(Looper.getMainLooper()).idle()
+        assertTrue(NotificationsHub.items.isEmpty())
+    }
+
+    @Test
+    fun mutedAppsAreHiddenForAWhile() {
+        val base = item(builder().setContentTitle("A").setContentText("uno").build())!!
+        val list = listOf(base.copy(key = "a", packageName = "ruidosa"), base.copy(key = "b", packageName = "otra"))
+        NotificationsHub.muteApp(ctx, "ruidosa", 60 * 60_000)
+        assertEquals(listOf("b"), NotificationsHub.visible(ctx, list).map { it.key })
+        assertEquals(2, NotificationsHub.visible(ctx, list, now = System.currentTimeMillis() + 2 * 60 * 60_000).size)
+    }
+
+    @Test
+    fun replyFillsRemoteInputAndActionsAreRead() {
+        val received = mutableListOf<Intent>()
+        val action = "com.ramiro.iosdroid.TEST_REPLY"
+        ctx.registerReceiver(object : android.content.BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) { received += intent }
+        }, android.content.IntentFilter(action), Context.RECEIVER_NOT_EXPORTED)
+        val pi = android.app.PendingIntent.getBroadcast(ctx, 0, Intent(action).setPackage(ctx.packageName), android.app.PendingIntent.FLAG_MUTABLE)
+        val input = android.app.RemoteInput.Builder("reply").setLabel("Responder").build()
+        val n = builder().setContentTitle("Ana").setContentText("hola")
+            .addAction(Notification.Action.Builder(null, "Responder", pi).addRemoteInput(input).build())
+            .addAction(Notification.Action.Builder(null, "Marcar como leído", pi).build())
+            .build()
+        val it = item(n)!!
+        assertEquals(listOf("Responder", "Marcar como leído"), it.actions.map { a -> a.title })
+        assertTrue(it.actions[0].isReply)
+        NotificationsHub.reply(ctx, it.actions[0], "dale")
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals("dale", android.app.RemoteInput.getResultsFromIntent(received.single())?.getCharSequence("reply")?.toString())
     }
 }

@@ -29,7 +29,7 @@ import androidx.core.view.WindowInsetsControllerCompat
  * - Abierto al bloquear: según [LockMode], enciende la pantalla y la deja encendida; si lo tapás
  *   (bolsillo, boca abajo) el sensor de proximidad apaga la pantalla. Al desbloquear se cierra solo.
  */
-class ClockActivity : ComponentActivity() {
+class ClockActivity : ComponentActivity(), NotificationHost {
 
     private var screen: ClockScreen? = null
     private val handler = Handler(Looper.getMainLooper())
@@ -39,6 +39,15 @@ class ClockActivity : ComponentActivity() {
     private var dismissing = false
     private var proximityLock: PowerManager.WakeLock? = null
     private var receiverRegistered = false
+    private var unlockDrag = false
+    private val back = object : androidx.activity.OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            screen?.notificationsUi?.closeTop()
+        }
+    }
+
+    /** Para los tests. */
+    internal val notificationsUi get() = screen?.notificationsUi
 
     private val hideExit = Runnable {
         exit.animate().alpha(0f).withEndAction { exit.visibility = View.GONE }.start()
@@ -77,18 +86,46 @@ class ClockActivity : ComponentActivity() {
         val root = findViewById<View>(R.id.clock_root)
         exit = findViewById(R.id.ss_exit)
         unlockHint = findViewById(R.id.ss_unlock_hint)
-        screen = ClockScreen(this, window, root, controlBrightness = true, onOpenNotification = ::openNotification)
-        // Bloqueado: con apoyar el dedo se abre el desbloqueo del sistema (con la huella activa),
-        // así se desbloquea "desde el reloj". Desbloqueado: un toque muestra el botón Salir.
-        root.setOnTouchListener { _, event ->
-            if (event.actionMasked == android.view.MotionEvent.ACTION_DOWN && locked()) {
-                leave()
-                true
-            } else {
-                false
+        screen = ClockScreen(this, window, root, controlBrightness = true, host = this)
+        onBackPressedDispatcher.addCallback(this, back)
+        // Bloqueado: con apoyar o tocar se abre el desbloqueo del sistema (con la huella activa).
+        // Deslizar hacia arriba abre las notificaciones (o desbloquea, si no hay).
+        (root as DragFrame).listener = object : DragFrame.Listener {
+            override fun onPress() {
+                if (screen?.notificationsUi?.closeRevealed() == true) return
+                if (locked()) leave()
+            }
+
+            override fun onTap() {
+                if (screen?.notificationsUi?.closeRevealed() == true) return
+                if (locked()) leave() else showExit()
+            }
+
+            override fun onDragStart(dy: Float): Boolean {
+                if (dy >= 0) return false
+                val ui = screen?.notificationsUi
+                if (ui != null && ui.beginCenterDrag()) {
+                    unlockDrag = false
+                    unlockHint.visibility = View.GONE
+                    return true
+                }
+                unlockDrag = locked()
+                return unlockDrag
+            }
+
+            override fun onDrag(dy: Float) {
+                if (!unlockDrag) screen?.notificationsUi?.dragCenter(dy)
+            }
+
+            override fun onDragEnd(dy: Float, velocityY: Float) {
+                if (unlockDrag) {
+                    if (dy < -60 * resources.displayMetrics.density) leave()
+                } else {
+                    screen?.notificationsUi?.settleCenter(dy, velocityY)
+                }
+                unlockDrag = false
             }
         }
-        root.setOnClickListener { showExit() }
         exit.setOnClickListener { leave() }
         showUnlockHint()
 
@@ -199,22 +236,32 @@ class ClockActivity : ComponentActivity() {
         proximityLock = null
     }
 
-    private fun locked() = getSystemService(KeyguardManager::class.java)?.isKeyguardLocked == true
+    override fun locked() = getSystemService(KeyguardManager::class.java)?.isKeyguardLocked == true
 
     /** Tocar una notificación: desbloquear si hace falta y abrir su app (como en el iPhone). */
-    private fun openNotification(item: NotifItem) {
-        val open = {
-            NotificationsHub.open(this, item)
-            finish()
-        }
+    override fun open(item: NotifItem) = unlockThen {
+        NotificationsHub.open(this, item)
+        finish()
+    }
+
+    override fun launch(intent: Intent) = unlockThen {
+        runCatching { startActivity(intent) }
+        finish()
+    }
+
+    override fun unlockThen(action: () -> Unit) {
         val keyguard = getSystemService(KeyguardManager::class.java)
         if (keyguard != null && keyguard.isKeyguardLocked) {
             keyguard.requestDismissKeyguard(this, object : KeyguardManager.KeyguardDismissCallback() {
-                override fun onDismissSucceeded() = open()
+                override fun onDismissSucceeded() = action()
             })
         } else {
-            open()
+            action()
         }
+    }
+
+    override fun onOverlayChanged(open: Boolean) {
+        back.isEnabled = open
     }
 
     /** Salir: si el teléfono está bloqueado, pide huella/PIN y después cierra. */
@@ -249,6 +296,9 @@ class ClockActivity : ComponentActivity() {
             unlockHint.visibility = View.GONE
             return
         }
+        unlockHint.setText(
+            if (screen?.notificationsUi?.hasItems == true) R.string.clock_unlock_hint_notifications else R.string.clock_unlock_hint,
+        )
         unlockHint.animate().cancel()
         unlockHint.alpha = 1f
         unlockHint.visibility = View.VISIBLE

@@ -111,6 +111,18 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("hide_notification_text", false)
         set(v) = sp.edit().putBoolean("hide_notification_text", v).apply()
 
+    /** Apps ocultas del reloj hasta cierto momento (JSON paquete → hasta). */
+    fun mutedApps(now: Long): Set<String> = runCatching {
+        val o = JSONObject(sp.getString("muted_apps", null) ?: "{}")
+        o.keys().asSequence().filter { o.optLong(it) > now }.toSet()
+    }.getOrDefault(emptySet())
+
+    fun muteApp(packageName: String, until: Long) {
+        val o = runCatching { JSONObject(sp.getString("muted_apps", null) ?: "{}") }.getOrDefault(JSONObject())
+        o.put(packageName, until)
+        sp.edit().putString("muted_apps", o.toString()).apply()
+    }
+
     /** Mostrar el reloj cada vez que se bloquea el teléfono. */
     var lockClock: Boolean
         get() = sp.getBoolean("lock_clock", false)

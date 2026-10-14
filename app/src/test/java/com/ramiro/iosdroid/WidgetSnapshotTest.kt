@@ -227,17 +227,26 @@ class WidgetSnapshotTest {
 
     private fun sampleNotifications(): List<NotifItem> {
         val now = System.currentTimeMillis()
-        fun n(key: String, app: String, title: String, text: String, minutesAgo: Long, private: Boolean = false) = NotifItem(
-            key, ctx.packageName, app, title, text, now - minutesAgo * 60_000, null, private, true, null,
+        fun n(key: String, pkg: String, app: String, title: String, text: String, minutesAgo: Long, private: Boolean = false) = NotifItem(
+            key, pkg, app, title, text, now - minutesAgo * 60_000, null, private, true, null,
         )
         return listOf(
-            n("1", "WhatsApp", "Ana", "¿Vamos al cine a las 9? Saco las entradas", 0),
-            n("2", "Mercado Pago", "Te transfirieron $12.500", "Juan Pérez te envió dinero", 4, private = true),
-            n("3", "Gmail", "Facturación", "Tu resumen de octubre ya está disponible", 38),
-            n("4", "Trenes Argentinos", "Línea Mitre", "Servicio con demoras", 75),
-            n("5", "Calendario", "Reunión", "Mañana 10:00", 130),
+            n("1", "com.whatsapp", "WhatsApp", "Ana", "¿Vamos al cine a las 9? Saco las entradas", 0, private = true),
+            n("6", "com.whatsapp", "WhatsApp", "Familia", "Pedro: llego en 5, pongan la pava", 2, private = true),
+            n("2", "com.mercadopago.wallet", "Mercado Pago", "Te transfirieron $12.500", "Juan Pérez te envió dinero", 4, private = true),
+            n("3", "com.google.android.gm", "Gmail", "Facturación", "Tu resumen de octubre ya está disponible. Lo puedes descargar desde la sección Resúmenes de tu cuenta.", 38),
+            n("4", "com.trenes", "Trenes Argentinos", "Línea Mitre", "Servicio con demoras", 75),
+            n("5", "com.google.android.calendar", "Calendario", "Reunión", "Mañana 10:00", 130),
         )
     }
+
+    private fun texts(v: View, out: MutableList<String> = mutableListOf()): List<String> {
+        if (v is TextView) out += v.text.toString()
+        if (v is ViewGroup) for (i in 0 until v.childCount) texts(v.getChildAt(i), out)
+        return out
+    }
+
+    private val keyguard get() = shadowOf(ctx.getSystemService(android.app.KeyguardManager::class.java))
 
     @Test
     fun renderClockWithNotifications() {
@@ -255,31 +264,78 @@ class WidgetSnapshotTest {
     }
 
     @Test
-    fun lockedClockHidesPrivateText() {
+    fun lockedClockFollowsSystemPrivacy() {
         NotificationsHub.publish(sampleNotifications())
         shadowOf(Looper.getMainLooper()).idle()
-        shadowOf(ctx.getSystemService(android.app.KeyguardManager::class.java)).setKeyguardLocked(true)
+        keyguard.setKeyguardLocked(true)
         try {
-            val activity = Robolectric.buildActivity(ClockActivity::class.java).setup().get()
+            // Por defecto Android muestra todo en la pantalla de bloqueo: el reloj también.
+            var activity = Robolectric.buildActivity(ClockActivity::class.java).setup().get()
             shadowOf(Looper.getMainLooper()).idle()
-            val texts = mutableListOf<String>()
-            fun collect(v: View) {
-                if (v is TextView) texts += v.text.toString()
-                if (v is android.view.ViewGroup) for (i in 0 until v.childCount) collect(v.getChildAt(i))
-            }
-            collect(activity.findViewById(R.id.ss_notifications))
-            // La de Mercado Pago es privada: con el teléfono bloqueado solo se ve la app.
-            assertTrue("Mercado Pago" in texts)
-            assertTrue("Notificación" in texts)
-            assertFalse(texts.any { "Juan Pérez" in it })
-            // Las demás se ven completas; la quinta queda en la pila.
-            assertTrue("Ana" in texts)
-            assertTrue("2 notificaciones más" in texts)
+            var shown = texts(activity.findViewById(R.id.ss_notifications))
+            assertTrue("Ana" in shown)
+            assertTrue(shown.any { "Juan Pérez" in it })
+            // Agrupadas por app: WhatsApp es una pila; Trenes y Calendario quedan para el centro.
+            assertTrue("1 notificación más" in shown)
+            assertTrue("2 notificaciones más" in shown)
+            assertFalse("Familia" in shown)
+            activity.finish()
+
+            // Con "Ocultar contenido sensible" en Android, lo privado se oculta.
+            android.provider.Settings.Secure.putInt(ctx.contentResolver, "lock_screen_allow_private_notifications", 0)
+            activity = Robolectric.buildActivity(ClockActivity::class.java).setup().get()
+            shadowOf(Looper.getMainLooper()).idle()
+            shown = texts(activity.findViewById(R.id.ss_notifications))
+            assertTrue("Mercado Pago" in shown)
+            assertTrue("Notificación" in shown)
+            assertFalse(shown.any { "Juan Pérez" in it })
+            assertTrue("Facturación" in shown)
         } finally {
-            shadowOf(ctx.getSystemService(android.app.KeyguardManager::class.java)).setKeyguardLocked(false)
+            android.provider.Settings.Secure.putInt(ctx.contentResolver, "lock_screen_allow_private_notifications", 1)
+            keyguard.setKeyguardLocked(false)
             NotificationsHub.publish(emptyList())
             shadowOf(Looper.getMainLooper()).idle()
         }
+    }
+
+    @Test
+    fun renderNotificationGestures() {
+        NotificationsHub.publish(sampleNotifications())
+        shadowOf(Looper.getMainLooper()).idle()
+        try {
+            for (bg in SaverBackground.entries) {
+                Prefs(ctx).saverBackground = bg
+                save(drawClock(landscape = false) { it.notificationsUi!!.openCenter("com.whatsapp", animated = false) },
+                    "notif_center_${bg.key}.png")
+            }
+            Prefs(ctx).saverBackground = SaverBackground.GLASS
+            save(drawClock(landscape = false) { a ->
+                val row = a.findViewById<ViewGroup>(R.id.ss_notifications).getChildAt(1)
+                swipe(row, -0.4f)
+            }, "notif_swipe_options.png")
+            save(drawClock(landscape = false) { a ->
+                val content = (a.findViewById<ViewGroup>(R.id.ss_notifications).getChildAt(2) as ViewGroup).let { it.getChildAt(it.childCount - 1) }
+                val down = android.view.MotionEvent.obtain(0, 0, android.view.MotionEvent.ACTION_DOWN, 50f, 50f, 0)
+                content.dispatchTouchEvent(down)
+                shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(1))
+                content.dispatchTouchEvent(android.view.MotionEvent.obtain(0, 900, android.view.MotionEvent.ACTION_UP, 50f, 50f, 0))
+            }, "notif_preview.png")
+        } finally {
+            NotificationsHub.publish(emptyList())
+            shadowOf(Looper.getMainLooper()).idle()
+        }
+    }
+
+    /** Desliza la tarjeta de una fila una fracción de su ancho (negativo: hacia la izquierda). */
+    private fun swipe(row: View, fraction: Float) {
+        val content = (row as ViewGroup).getChildAt(row.childCount - 1)
+        val dx = row.width * fraction
+        fun ev(action: Int, x: Float, t: Long) = android.view.MotionEvent.obtain(0, t, action, x, 40f, 0).apply { setLocation(x, 40f) }
+        val x0 = row.width * 0.7f
+        content.dispatchTouchEvent(ev(android.view.MotionEvent.ACTION_DOWN, x0, 0))
+        for (i in 1..8) content.dispatchTouchEvent(ev(android.view.MotionEvent.ACTION_MOVE, x0 + dx * i / 8, i * 16L))
+        content.dispatchTouchEvent(ev(android.view.MotionEvent.ACTION_UP, x0 + dx, 150))
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(1))
     }
 
     @Test
@@ -306,7 +362,7 @@ class WidgetSnapshotTest {
         }
     }
 
-    private fun drawClock(landscape: Boolean): Bitmap {
+    private fun drawClock(landscape: Boolean, action: ((ClockActivity) -> Unit)? = null): Bitmap {
         val activity = Robolectric.buildActivity(ClockActivity::class.java).setup().get()
         shadowOf(Looper.getMainLooper()).idle()
         val root = activity.window.decorView
@@ -316,6 +372,14 @@ class WidgetSnapshotTest {
             root.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(h, View.MeasureSpec.EXACTLY))
             root.layout(0, 0, w, h)
             shadowOf(Looper.getMainLooper()).idle()
+        }
+        if (action != null) {
+            action(activity)
+            repeat(2) {
+                root.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(h, View.MeasureSpec.EXACTLY))
+                root.layout(0, 0, w, h)
+                shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMillis(600))
+            }
         }
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         // Fondo de ejemplo para ver el modo "Vidrio" (en el teléfono es tu fondo de pantalla).
