@@ -189,16 +189,37 @@ class WidgetSnapshotTest {
         javaClass.classLoader!!.getResourceAsStream("testfonts/Caladea-Regular.ttf")!!.use { input ->
             font.outputStream().use { input.copyTo(it) }
         }
-        CustomFont.import(ctx, android.net.Uri.fromFile(font))
-        Prefs(ctx).useCustomFont = true
+        CustomFont.importAll(ctx, listOf(android.net.Uri.fromFile(font)))
         try {
             save(draw(222f, 181f, wallpaper = true), "custom_font_medium.png")
             save(draw(222f, 273f, wallpaper = true), "custom_font_large.png")
             save(draw(144f, 181f, wallpaper = true), "custom_font_small.png")
             save(draw(378f, 273f, wallpaper = true), "custom_font_xl.png")
         } finally {
-            CustomFont.remove(ctx)
-            Prefs(ctx).useCustomFont = false
+            CustomFont.list(ctx).forEach { CustomFont.remove(ctx, it) }
+        }
+    }
+
+    /**
+     * Solo local: si SFPRO_DIR apunta a archivos de SF Pro, los carga y dibuja la vista previa.
+     * Las fuentes de Apple no se suben al repositorio (su licencia no permite redistribuirlas).
+     */
+    @Test
+    fun renderWithLocalSfPro() {
+        val dir = System.getenv("SFPRO_DIR")?.let { java.io.File(it) }
+        org.junit.Assume.assumeTrue(dir != null && dir.isDirectory)
+        val files = dir!!.listFiles()!!.filter { it.name.endsWith(".otf", ignoreCase = true) }.sortedBy { it.name }
+        val summary = CustomFont.importAll(ctx, files.map { android.net.Uri.fromFile(it) })
+        try {
+            assertEquals(files.size, summary.loaded.size)
+            println("SF Pro cargadas: " + summary.loaded.joinToString { it.fullName } + " · elegida: " + CustomFont.selected(ctx)?.fullName)
+            save(draw(222f, 273f, wallpaper = true), "sfpro_large.png")
+            save(draw(378f, 181f, wallpaper = true), "sfpro_wide.png")
+            CustomFont.select(ctx, summary.loaded.first { it.style == "Bold" })
+            save(draw(222f, 181f, wallpaper = true), "sfpro_bold_medium.png")
+            save(drawClock(landscape = false), "sfpro_clock.png")
+        } finally {
+            CustomFont.list(ctx).forEach { CustomFont.remove(ctx, it) }
         }
     }
 
@@ -247,8 +268,7 @@ class WidgetSnapshotTest {
         javaClass.classLoader!!.getResourceAsStream("testfonts/Caladea-Regular.ttf")!!.use { input ->
             font.outputStream().use { input.copyTo(it) }
         }
-        CustomFont.import(ctx, android.net.Uri.fromFile(font))
-        Prefs(ctx).apply { useCustomFont = true; customFontName = "Caladea-Regular" }
+        CustomFont.importAll(ctx, listOf(android.net.Uri.fromFile(font)))
         try {
             val activity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
             val root = activity.window.decorView
@@ -263,8 +283,7 @@ class WidgetSnapshotTest {
             root.draw(Canvas(bmp))
             save(bmp, "settings_custom_font.png")
         } finally {
-            CustomFont.remove(ctx)
-            Prefs(ctx).useCustomFont = false
+            CustomFont.list(ctx).forEach { CustomFont.remove(ctx, it) }
         }
     }
 

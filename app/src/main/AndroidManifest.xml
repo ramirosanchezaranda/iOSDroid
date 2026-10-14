@@ -57,6 +57,40 @@
                 android:resource="@xml/shortcuts" />
         </activity>
 
+        <!-- Recibe fuentes desde otras apps: "Abrir con" o "Compartir". -->
+        <activity
+            android:name=".ImportFontActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:label="@string/import_font_label"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="font/otf" />
+                <data android:mimeType="font/ttf" />
+                <data android:mimeType="font/sfnt" />
+                <data android:mimeType="font/collection" />
+                <data android:mimeType="application/x-font-otf" />
+                <data android:mimeType="application/x-font-ttf" />
+                <data android:mimeType="application/x-font-opentype" />
+                <data android:mimeType="application/x-font-truetype" />
+                <data android:mimeType="application/font-sfnt" />
+                <data android:mimeType="application/vnd.ms-opentype" />
+                <data android:mimeType="application/vnd.oasis.opendocument.formula-template" />
+            </intent-filter>
+            <!-- WhatsApp y otras apps comparten documentos como archivos genéricos; se valida al importar. -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/octet-stream" />
+            </intent-filter>
+        </activity>
+
         <!-- Modo reloj: pantalla completa que no se apaga. -->
         <activity
             android:name=".ClockActivity"

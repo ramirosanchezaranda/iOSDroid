@@ -11,9 +11,12 @@ Widget para la pantalla de inicio de Android con **hora, fecha y clima**, con es
 - **Tres vidrios**: Transparente, Esmerilado y Ahumado. Texto blanco, negro o automático según el fondo de pantalla.
 - **Fuente de la hora** (como la pantalla de bloqueo de iOS): Fina, Ligera, Normal, Gruesa, Negra, Condensada, Serif,
   Mono y Manuscrita. Los pesos usan la fuente del sistema, así que en ColorOS se ven con **OPPO Sans**.
-- **Fuente propia**: con «+ Cargar» se elige un archivo .ttf u .otf (por ejemplo SF Pro). Se usa en el modo reloj, la
-  pantalla bloqueada y el widget; en el widget la hora se dibuja como imagen y se actualiza cada minuto con la pantalla
+- **Fuentes propias**: con «Cargar fuentes» se eligen uno o varios archivos .ttf / .otf (por ejemplo SF Pro), o desde
+  el administrador de archivos, WhatsApp o Telegram: *Abrir con* / *Compartir* → iOSDroid. Cada archivo aparece como
+  un chip con el nombre que trae la fuente (p. ej. "Bold · SF Pro Display"). Se usan en el modo reloj, la pantalla
+  bloqueada y el widget; en el widget la hora se dibuja como imagen y se actualiza cada minuto con la pantalla
   encendida (lo hace el servicio en segundo plano). Con fuentes variables se puede elegir el peso.
+  La app no incluye fuentes de terceros: las de Apple (SF Pro) no se pueden redistribuir.
 - **Fecha con la misma fuente** (*Usar también en la fecha*, activado por defecto): la fecha toma la familia de la hora
   (Serif, Condensada, Mono, Manuscrita o tu fuente propia) en peso medio.
 - Toques: hora → alarmas, fecha → calendario, clima → ajustes.

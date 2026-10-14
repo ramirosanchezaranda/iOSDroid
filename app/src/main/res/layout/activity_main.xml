@@ -135,6 +135,14 @@
                     android:orientation="horizontal" />
             </HorizontalScrollView>
 
+            <View style="@style/Separator" />
+
+            <TextView
+                android:id="@+id/font_load"
+                style="@style/Row.Disclosure"
+                android:text="@string/font_load_row"
+                android:textColor="@color/ios_blue" />
+
             <View
                 android:id="@+id/font_weight_sep"
                 style="@style/Separator" />

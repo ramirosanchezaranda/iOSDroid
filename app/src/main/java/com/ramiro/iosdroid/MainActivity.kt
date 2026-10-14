@@ -75,14 +75,20 @@ class MainActivity : ComponentActivity() {
         renderLockState()
     }
 
-    private val pickFont = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) importFont(uri)
+    // Selector de archivos (el del sistema o "Mis archivos"), con varios a la vez.
+    private val pickFonts = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val data = result.data ?: return@registerForActivityResult
+        val uris = buildList {
+            data.clipData?.let { clip -> for (i in 0 until clip.itemCount) clip.getItemAt(i).uri?.let(::add) }
+            if (isEmpty()) data.data?.let(::add)
+        }
+        if (uris.isNotEmpty()) importFonts(uris)
     }
 
     // Con fuente propia la hora de la vista previa es una imagen: se redibuja cada minuto.
     private val minuteTick = object : android.content.BroadcastReceiver() {
         override fun onReceive(context: android.content.Context, intent: Intent) {
-            if (prefs.useCustomFont) renderPreview()
+            if (CustomFont.selected(this@MainActivity) != null) renderPreview()
         }
     }
 
@@ -334,43 +340,15 @@ class MainActivity : ComponentActivity() {
     private fun setupFonts() {
         val row = findViewById<LinearLayout>(R.id.fonts)
         row.removeAllViews()
-        ClockFont.entries.forEach { font ->
-            row.addView(fontChip(font.typeface(), font.letterSpacing, getString(font.label),
-                selected = !prefs.useCustomFont && font == prefs.clockFont) {
-                prefs.useCustomFont = false
-                prefs.clockFont = font
-                fontChanged()
-            }, chipParams())
-        }
-        // Fuente cargada por el usuario.
-        val custom = CustomFont.typeface(this, prefs.customFontWeight)
-        if (custom != null) {
-            val name = prefs.customFontName.ifBlank { getString(R.string.font_custom_default_name) }
-            val chip = fontChip(custom, -0.01f, name, selected = prefs.useCustomFont) {
-                prefs.useCustomFont = true
-                fontChanged()
-            }
-            chip.setOnLongClickListener {
-                AlertDialog.Builder(this)
-                    .setTitle(getString(R.string.font_remove_title, name))
-                    .setPositiveButton(R.string.font_remove) { _, _ ->
-                        CustomFont.remove(this)
-                        prefs.useCustomFont = false
-                        fontChanged()
-                    }
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .show()
-                true
-            }
-            row.addView(chip, chipParams())
-        }
-        // "+": cargar una fuente .ttf / .otf.
+        val selected = CustomFont.selected(this)
+        var selectedIndex = 0
+
+        // "+" primero, así se ve sin deslizar.
         row.addView(LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
             setBackgroundResource(R.drawable.font_chip)
-            setPadding(dp(4f), dp(12f), dp(4f), dp(10f))
-            contentDescription = getString(R.string.font_add)
+            contentDescription = getString(R.string.font_load_row)
             addView(TextView(context).apply {
                 text = "+"
                 textSize = 30f
@@ -383,9 +361,45 @@ class MainActivity : ComponentActivity() {
                 setTextColor(getColor(R.color.ios_blue))
             }, LinearLayout.LayoutParams(WRAP, WRAP).apply { topMargin = dp(6f) })
             pressFeedback()
-            setOnClickListener { runCatching { pickFont.launch(arrayOf("*/*")) } }
+            setOnClickListener { openFontPicker() }
         }, chipParams())
 
+        // Tus fuentes, con el nombre que trae el archivo ("Bold" / "SF Pro Display").
+        CustomFont.list(this).forEach { font ->
+            val typeface = CustomFont.typeface(this, font, prefs.customFontWeight) ?: return@forEach
+            val title = font.style.ifBlank { font.family }
+            val subtitle = font.family.takeIf { font.style.isNotBlank() }
+            if (font.id == selected?.id) selectedIndex = row.childCount
+            val chip = fontChip(typeface, -0.01f, title, subtitle, selected = font.id == selected?.id) {
+                CustomFont.select(this, font)
+                fontChanged()
+            }
+            chip.setOnLongClickListener {
+                AlertDialog.Builder(this)
+                    .setTitle(getString(R.string.font_remove_title, font.fullName))
+                    .setPositiveButton(R.string.font_remove) { _, _ ->
+                        CustomFont.remove(this, font)
+                        fontChanged()
+                    }
+                    .setNegativeButton(android.R.string.cancel, null)
+                    .show()
+                true
+            }
+            row.addView(chip, chipParams())
+        }
+
+        // Fuentes del sistema (OPPO Sans en distintos pesos, Serif, Mono...).
+        ClockFont.entries.forEach { font ->
+            val isSelected = selected == null && font == prefs.clockFont
+            if (isSelected) selectedIndex = row.childCount
+            row.addView(fontChip(font.typeface(), font.letterSpacing, getString(font.label), null, isSelected) {
+                CustomFont.select(this, null)
+                prefs.clockFont = font
+                fontChanged()
+            }, chipParams())
+        }
+
+        // El peso solo se puede elegir en fuentes variables.
         segmented(
             R.id.seg_font_weight,
             listOf(R.string.font_thin, R.string.font_light, R.string.font_regular, R.string.font_bold),
@@ -394,20 +408,36 @@ class MainActivity : ComponentActivity() {
             prefs.customFontWeight = CustomFont.WEIGHTS[it]
             fontChanged()
         }
-        val weightVisibility = if (prefs.useCustomFont && custom != null) View.VISIBLE else View.GONE
+        val weightVisibility = if (selected?.variable == true) View.VISIBLE else View.GONE
         findViewById<View>(R.id.seg_font_weight).visibility = weightVisibility
         findViewById<View>(R.id.font_weight_sep).visibility = weightVisibility
 
         // Que la fuente elegida quede a la vista.
         val scroll = findViewById<HorizontalScrollView>(R.id.font_scroll)
-        val selectedIndex = if (prefs.useCustomFont && custom != null) ClockFont.entries.size else prefs.clockFont.ordinal
         scroll.post {
-            val selected = row.getChildAt(selectedIndex) ?: return@post
-            scroll.scrollTo(max(0, selected.left - dp(12f)), 0)
+            val chip = row.getChildAt(selectedIndex) ?: return@post
+            scroll.scrollTo(max(0, chip.left - dp(12f)), 0)
+        }
+    }
+
+    private fun openFontPicker() {
+        val get = Intent(Intent.ACTION_GET_CONTENT)
+            .setType("*/*")
+            .addCategory(Intent.CATEGORY_OPENABLE)
+            .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+        runCatching { pickFonts.launch(Intent.createChooser(get, getString(R.string.font_pick_title))) }
+    }
+
+    private fun importFonts(uris: List<Uri>) {
+        lifecycleScope.launch {
+            val summary = withContext(Dispatchers.IO) { CustomFont.importAll(this@MainActivity, uris) }
+            if (summary.loaded.isNotEmpty()) fontChanged()
+            Toast.makeText(this@MainActivity, ImportFontActivity.message(this@MainActivity, summary), Toast.LENGTH_LONG).show()
         }
     }
 
     private fun setupFontForDate() {
+        findViewById<View>(R.id.font_load).setOnClickListener { openFontPicker() }
         val switch = findViewById<Switch>(R.id.font_date_switch)
         switch.isChecked = prefs.fontForDate
         switch.setOnCheckedChangeListener { view, on ->
@@ -418,58 +448,59 @@ class MainActivity : ComponentActivity() {
         findViewById<View>(R.id.font_date_row).setOnClickListener { switch.toggle() }
     }
 
-    private fun fontChip(typeface: android.graphics.Typeface, spacing: Float, label: String, selected: Boolean, onPick: () -> Unit) =
-        LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setBackgroundResource(R.drawable.font_chip)
-            setPadding(dp(4f), dp(12f), dp(4f), dp(10f))
-            isSelected = selected
-            contentDescription = label
+    private fun fontChip(
+        typeface: android.graphics.Typeface,
+        spacing: Float,
+        label: String,
+        subtitle: String?,
+        selected: Boolean,
+        onPick: () -> Unit,
+    ) = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        gravity = Gravity.CENTER
+        setBackgroundResource(R.drawable.font_chip)
+        setPadding(dp(4f), dp(8f), dp(4f), dp(8f))
+        isSelected = selected
+        contentDescription = listOfNotNull(subtitle, label).joinToString(" ")
+        addView(TextView(context).apply {
+            setText(R.string.font_sample)
+            this.typeface = typeface
+            letterSpacing = spacing
+            textSize = 30f
+            includeFontPadding = false
+            setTextColor(getColor(R.color.ios_label))
+        }, LinearLayout.LayoutParams(WRAP, WRAP))
+        addView(TextView(context).apply {
+            text = label
+            textSize = 12f
+            maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
+            setTextColor(getColor(R.color.ios_secondary))
+        }, LinearLayout.LayoutParams(WRAP, WRAP).apply { topMargin = dp(6f) })
+        if (subtitle != null) {
             addView(TextView(context).apply {
-                setText(R.string.font_sample)
-                this.typeface = typeface
-                letterSpacing = spacing
-                textSize = 30f
-                includeFontPadding = false
-                setTextColor(getColor(R.color.ios_label))
-            }, LinearLayout.LayoutParams(WRAP, WRAP))
-            addView(TextView(context).apply {
-                text = label
-                textSize = 12f
+                text = subtitle
+                textSize = 10f
                 maxLines = 1
                 ellipsize = TextUtils.TruncateAt.END
                 setTextColor(getColor(R.color.ios_secondary))
-            }, LinearLayout.LayoutParams(WRAP, WRAP).apply { topMargin = dp(6f) })
-            pressFeedback()
-            setOnClickListener {
-                if (isSelected) return@setOnClickListener
-                selectionTick(this)
-                onPick()
-            }
+                alpha = 0.7f
+            }, LinearLayout.LayoutParams(WRAP, WRAP))
         }
+        pressFeedback()
+        setOnClickListener {
+            if (isSelected) return@setOnClickListener
+            selectionTick(this)
+            onPick()
+        }
+    }
 
-    private fun chipParams() = LinearLayout.LayoutParams(dp(76f), WRAP).apply { marginEnd = dp(8f) }
+    private fun chipParams() = LinearLayout.LayoutParams(dp(84f), dp(96f)).apply { marginEnd = dp(8f) }
 
     private fun fontChanged() {
         setupFonts()
         settingsChanged()
         ClockService.sync(this)
-    }
-
-    private fun importFont(uri: Uri) {
-        lifecycleScope.launch {
-            val result = withContext(Dispatchers.IO) { CustomFont.import(this@MainActivity, uri) }
-            when (result) {
-                is CustomFont.ImportResult.Ok -> {
-                    prefs.customFontName = result.name
-                    prefs.useCustomFont = true
-                    fontChanged()
-                    Toast.makeText(this@MainActivity, getString(R.string.font_loaded, result.name), Toast.LENGTH_SHORT).show()
-                }
-                CustomFont.ImportResult.Invalid -> toast(R.string.font_invalid)
-            }
-        }
     }
 
     // --- Reloj al bloquear el teléfono ---

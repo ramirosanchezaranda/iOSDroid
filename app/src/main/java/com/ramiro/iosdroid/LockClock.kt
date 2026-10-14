@@ -181,7 +181,7 @@ class ClockService : Service() {
         /** Hace falta el servicio si el reloj al bloquear está activo o algún widget usa fuente propia. */
         fun needed(context: Context): Boolean {
             val prefs = Prefs(context)
-            return prefs.lockClock || (prefs.useCustomFont && CustomFont.exists(context) && widgetCount(context) > 0)
+            return prefs.lockClock || (CustomFont.selected(context) != null && widgetCount(context) > 0)
         }
 
         /** Arranca o detiene el servicio según las preferencias. */
@@ -200,7 +200,7 @@ class ClockService : Service() {
 
         /** Con fuente propia, la hora del widget es una imagen: se redibuja cada minuto con la pantalla encendida. */
         fun refreshWidgetTime(context: Context, onlyIfScreenOn: Boolean) {
-            if (!Prefs(context).useCustomFont || !CustomFont.exists(context)) return
+            if (CustomFont.selected(context) == null) return
             if (onlyIfScreenOn && context.getSystemService(PowerManager::class.java)?.isInteractive == false) return
             WidgetRenderer.updateAll(context)
         }

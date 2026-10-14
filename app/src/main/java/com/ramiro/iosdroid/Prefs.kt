@@ -78,14 +78,19 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("saver_dim", false)
         set(v) = sp.edit().putBoolean("saver_dim", v).apply()
 
-    /** Usar la fuente cargada por el usuario en lugar de [clockFont]. */
-    var useCustomFont: Boolean
-        get() = sp.getBoolean("custom_font", false)
-        set(v) = sp.edit().putBoolean("custom_font", v).apply()
+    /** Fuentes cargadas por el usuario (JSON, ver [CustomFont]). */
+    var fontLibrary: String
+        get() = sp.getString("font_library", null) ?: "[]"
+        set(v) = sp.edit().putString("font_library", v).apply()
 
-    var customFontName: String
-        get() = sp.getString("custom_font_name", null) ?: ""
-        set(v) = sp.edit().putString("custom_font_name", v).apply()
+    /** Fuente propia elegida para la hora; vacío = se usa [clockFont]. */
+    var selectedFontId: String
+        get() = sp.getString("selected_font", null) ?: ""
+        set(v) = sp.edit().putString("selected_font", v).apply()
+
+    // Versión 1.3/1.4: una sola fuente propia (se migra a la biblioteca).
+    val legacyUseCustomFont: Boolean get() = sp.getBoolean("custom_font", false)
+    val customFontName: String get() = sp.getString("custom_font_name", null) ?: ""
 
     /** Usar la fuente elegida también para la fecha. */
     var fontForDate: Boolean
