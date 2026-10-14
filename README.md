@@ -33,6 +33,11 @@ Widget para la pantalla de inicio de Android con **hora, fecha y clima**, con es
   pantalla). Se cierra solo al desbloquear con huella/cara, o con *Desbloquear*. Funciona con un servicio en primer
   plano que escucha el apagado de pantalla y una notificación de pantalla completa (como las alarmas); se reactiva
   solo al reiniciar el teléfono.
+- **Notificaciones en el reloj** (como la pantalla de bloqueo del iPhone): tarjetas abajo del reloj con ícono, título,
+  texto y "ahora / hace 5 min", apiladas cuando hay muchas. Tocar abre la app (pide desbloquear si hace falta) y
+  deslizar hacia un costado la borra. Con el teléfono bloqueado se respeta el contenido privado de cada app, y se
+  puede ocultar todo el texto. Requiere dar acceso a las notificaciones (si Android dice "Ajuste restringido":
+  Información de la app → ⋮ → Permitir ajustes restringidos).
 - **Protector de pantalla del sistema** (*Reloj Glass*): se activa solo mientras el teléfono carga. En ColorOS el menú
   está oculto; el botón de la app abre esa pantalla de Ajustes directamente.
 - Para cuidar la pantalla, el contenido se mueve un poco cada minuto (sin animación si está activado "Reducir movimiento").

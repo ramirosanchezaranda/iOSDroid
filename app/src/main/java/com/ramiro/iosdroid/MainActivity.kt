@@ -151,6 +151,7 @@ class MainActivity : ComponentActivity() {
         setupFonts()
         setupFontForDate()
         setupLock()
+        setupNotifications()
         setupClockMode()
 
         findViewById<View>(R.id.pin).apply {
@@ -206,6 +207,7 @@ class MainActivity : ComponentActivity() {
         // Al volver de Ajustes (permisos) o si el sistema detuvo el servicio.
         ClockService.sync(this)
         renderLockState()
+        renderNotificationState()
         renderCity()
         renderPreview()
         renderStatus()
@@ -558,6 +560,52 @@ class MainActivity : ComponentActivity() {
         }
         runCatching { startActivity(intent) }
             .onFailure { runCatching { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, app)) } }
+    }
+
+    // --- Notificaciones en el reloj ---
+
+    private fun setupNotifications() {
+        val show = findViewById<Switch>(R.id.notif_switch)
+        show.isChecked = prefs.clockNotifications
+        show.setOnCheckedChangeListener { view, on ->
+            selectionTick(view)
+            prefs.clockNotifications = on
+            if (on && !NotificationsHub.accessGranted(this)) openNotificationAccess()
+            renderNotificationState()
+        }
+        findViewById<View>(R.id.notif_row).setOnClickListener { show.toggle() }
+        val hide = findViewById<Switch>(R.id.notif_hide_switch)
+        hide.isChecked = prefs.hideNotificationText
+        hide.setOnCheckedChangeListener { view, on ->
+            selectionTick(view)
+            prefs.hideNotificationText = on
+        }
+        findViewById<View>(R.id.notif_hide_row).setOnClickListener { hide.toggle() }
+        findViewById<View>(R.id.notif_permission).setOnClickListener { openNotificationAccess() }
+        findViewById<View>(R.id.notif_app_info).setOnClickListener {
+            runCatching { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) }
+        }
+    }
+
+    private fun renderNotificationState() {
+        val missing = prefs.clockNotifications && !NotificationsHub.accessGranted(this)
+        val visibility = if (missing) View.VISIBLE else View.GONE
+        listOf(R.id.notif_permission, R.id.notif_permission_sep, R.id.notif_app_info, R.id.notif_app_info_sep)
+            .forEach { findViewById<View>(it).visibility = visibility }
+    }
+
+    /** Pantalla de Ajustes para dar acceso a las notificaciones (directo a esta app si se puede). */
+    private fun openNotificationAccess() {
+        val component = ComponentName(this, NotificationsService::class.java).flattenToString()
+        val direct = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS)
+                .putExtra(Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME, component)
+        } else {
+            null
+        }
+        val general = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
+        val started = direct?.let { runCatching { startActivity(it) }.isSuccess } ?: false
+        if (!started) runCatching { startActivity(general) }
     }
 
     // --- Modo reloj y protector de pantalla ---

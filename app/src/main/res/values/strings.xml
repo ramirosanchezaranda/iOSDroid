@@ -131,6 +131,23 @@
     <string name="clock_exit">Salir</string>
     <string name="clock_unlock">Desbloquear</string>
 
+    <!-- Notificaciones en el reloj -->
+    <string name="section_notifications">Notificaciones en el reloj</string>
+    <string name="notif_show">Mostrar notificaciones</string>
+    <string name="notif_hide_text">Ocultar el texto si está bloqueado</string>
+    <string name="notif_permission">Permitir acceso a las notificaciones</string>
+    <string name="notif_app_info">Abrir información de la app</string>
+    <string name="notif_note">Aparecen abajo del reloj, como en el iPhone: toca una para abrirla (si está bloqueado, te pide desbloquear) y deslízala hacia un costado para borrarla.\n\nHay que darle a iOSDroid acceso a las notificaciones. Si Android dice «Ajuste restringido», abre la información de la app → ⋮ → «Permitir ajustes restringidos» y vuelve a intentarlo.</string>
+    <string name="notif_service_label">Notificaciones en el reloj de iOSDroid</string>
+    <string name="notif_now">ahora</string>
+    <string name="notif_minutes">hace %d min</string>
+    <string name="notif_hours">hace %d h</string>
+    <string name="notif_hidden">Notificación</string>
+    <plurals name="notif_more">
+        <item quantity="one">%d notificación más</item>
+        <item quantity="other">%d notificaciones más</item>
+    </plurals>
+
     <!-- Reloj al bloquear -->
     <string name="section_lock">Pantalla bloqueada</string>
     <string name="lock_title">Mostrar al bloquear el teléfono</string>

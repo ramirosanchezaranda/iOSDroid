@@ -14,6 +14,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.work.testing.WorkManagerTestInitHelper
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -223,6 +224,63 @@ class WidgetSnapshotTest {
         }
     }
 
+    private fun sampleNotifications(): List<NotifItem> {
+        val now = System.currentTimeMillis()
+        fun n(key: String, app: String, title: String, text: String, minutesAgo: Long, private: Boolean = false) = NotifItem(
+            key, ctx.packageName, app, title, text, now - minutesAgo * 60_000, null, private, true, null,
+        )
+        return listOf(
+            n("1", "WhatsApp", "Ana", "¿Vamos al cine a las 9? Saco las entradas", 0),
+            n("2", "Mercado Pago", "Te transfirieron $12.500", "Juan Pérez te envió dinero", 4, private = true),
+            n("3", "Gmail", "Facturación", "Tu resumen de octubre ya está disponible", 38),
+            n("4", "Trenes Argentinos", "Línea Mitre", "Servicio con demoras", 75),
+            n("5", "Calendario", "Reunión", "Mañana 10:00", 130),
+        )
+    }
+
+    @Test
+    fun renderClockWithNotifications() {
+        NotificationsHub.publish(sampleNotifications())
+        shadowOf(Looper.getMainLooper()).idle()
+        try {
+            for (bg in SaverBackground.entries) {
+                Prefs(ctx).saverBackground = bg
+                save(drawClock(landscape = false), "clock_notifications_${bg.key}.png")
+            }
+        } finally {
+            NotificationsHub.publish(emptyList())
+            shadowOf(Looper.getMainLooper()).idle()
+        }
+    }
+
+    @Test
+    fun lockedClockHidesPrivateText() {
+        NotificationsHub.publish(sampleNotifications())
+        shadowOf(Looper.getMainLooper()).idle()
+        shadowOf(ctx.getSystemService(android.app.KeyguardManager::class.java)).setKeyguardLocked(true)
+        try {
+            val activity = Robolectric.buildActivity(ClockActivity::class.java).setup().get()
+            shadowOf(Looper.getMainLooper()).idle()
+            val texts = mutableListOf<String>()
+            fun collect(v: View) {
+                if (v is TextView) texts += v.text.toString()
+                if (v is android.view.ViewGroup) for (i in 0 until v.childCount) collect(v.getChildAt(i))
+            }
+            collect(activity.findViewById(R.id.ss_notifications))
+            // La de Mercado Pago es privada: con el teléfono bloqueado solo se ve la app.
+            assertTrue("Mercado Pago" in texts)
+            assertTrue("Notificación" in texts)
+            assertFalse(texts.any { "Juan Pérez" in it })
+            // Las demás se ven completas; la quinta queda en la pila.
+            assertTrue("Ana" in texts)
+            assertTrue("2 notificaciones más" in texts)
+        } finally {
+            shadowOf(ctx.getSystemService(android.app.KeyguardManager::class.java)).setKeyguardLocked(false)
+            NotificationsHub.publish(emptyList())
+            shadowOf(Looper.getMainLooper()).idle()
+        }
+    }
+
     @Test
     fun renderClockScreens() {
         for (bg in SaverBackground.entries) {
@@ -237,6 +295,14 @@ class WidgetSnapshotTest {
         Prefs(ctx).saverBackground = SaverBackground.BLACK
         Prefs(ctx).clockFont = ClockFont.BOLD
         save(drawClock(landscape = true), "clock_black_landscape.png")
+        NotificationsHub.publish(sampleNotifications())
+        shadowOf(Looper.getMainLooper()).idle()
+        try {
+            save(drawClock(landscape = true), "clock_notifications_landscape.png")
+        } finally {
+            NotificationsHub.publish(emptyList())
+            shadowOf(Looper.getMainLooper()).idle()
+        }
     }
 
     private fun drawClock(landscape: Boolean): Bitmap {

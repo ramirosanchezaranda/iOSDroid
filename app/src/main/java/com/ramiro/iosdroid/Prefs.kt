@@ -101,6 +101,16 @@ class Prefs(context: Context) {
         get() = sp.getInt("custom_font_weight", 400)
         set(v) = sp.edit().putInt("custom_font_weight", v).apply()
 
+    /** Mostrar las notificaciones en el reloj (modo reloj, pantalla bloqueada y protector). */
+    var clockNotifications: Boolean
+        get() = sp.getBoolean("clock_notifications", true)
+        set(v) = sp.edit().putBoolean("clock_notifications", v).apply()
+
+    /** Con el teléfono bloqueado, mostrar solo la app y no el texto. */
+    var hideNotificationText: Boolean
+        get() = sp.getBoolean("hide_notification_text", false)
+        set(v) = sp.edit().putBoolean("hide_notification_text", v).apply()
+
     /** Mostrar el reloj cada vez que se bloquea el teléfono. */
     var lockClock: Boolean
         get() = sp.getBoolean("lock_clock", false)

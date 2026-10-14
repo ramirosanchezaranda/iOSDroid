@@ -338,6 +338,98 @@
 
         <TextView
             style="@style/SectionHeader"
+            android:text="@string/section_notifications" />
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout
+                android:id="@+id/notif_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/row_highlight"
+                android:gravity="center_vertical"
+                android:minHeight="50dp"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/notif_show"
+                    android:textColor="@color/ios_label"
+                    android:textSize="17sp" />
+
+                <Switch
+                    android:id="@+id/notif_switch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/notif_show"
+                    android:showText="false"
+                    android:switchMinWidth="51dp"
+                    android:thumb="@drawable/ios_switch_thumb"
+                    android:track="@drawable/ios_switch_track" />
+            </LinearLayout>
+
+            <View
+                android:id="@+id/notif_permission_sep"
+                style="@style/Separator" />
+
+            <TextView
+                android:id="@+id/notif_permission"
+                style="@style/Row.Disclosure"
+                android:text="@string/notif_permission"
+                android:textColor="@color/ios_blue" />
+
+            <View
+                android:id="@+id/notif_app_info_sep"
+                style="@style/Separator" />
+
+            <TextView
+                android:id="@+id/notif_app_info"
+                style="@style/Row.Disclosure"
+                android:text="@string/notif_app_info" />
+
+            <View style="@style/Separator" />
+
+            <LinearLayout
+                android:id="@+id/notif_hide_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/row_highlight"
+                android:gravity="center_vertical"
+                android:minHeight="50dp"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/notif_hide_text"
+                    android:textColor="@color/ios_label"
+                    android:textSize="17sp" />
+
+                <Switch
+                    android:id="@+id/notif_hide_switch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/notif_hide_text"
+                    android:showText="false"
+                    android:switchMinWidth="51dp"
+                    android:thumb="@drawable/ios_switch_thumb"
+                    android:track="@drawable/ios_switch_track" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            style="@style/Footnote"
+            android:text="@string/notif_note" />
+
+        <TextView
+            style="@style/SectionHeader"
             android:text="@string/section_saver" />
 
         <LinearLayout style="@style/Card">

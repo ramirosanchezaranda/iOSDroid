@@ -74,7 +74,7 @@ class ClockActivity : ComponentActivity() {
 
         val root = findViewById<View>(R.id.clock_root)
         exit = findViewById(R.id.ss_exit)
-        screen = ClockScreen(this, window, root, controlBrightness = true)
+        screen = ClockScreen(this, window, root, controlBrightness = true, onOpenNotification = ::openNotification)
         // Un toque muestra el botón (así un roce no lo cierra).
         root.setOnClickListener { showExit() }
         exit.setOnClickListener { leave() }
@@ -186,6 +186,22 @@ class ClockActivity : ComponentActivity() {
     }
 
     private fun locked() = getSystemService(KeyguardManager::class.java)?.isKeyguardLocked == true
+
+    /** Tocar una notificación: desbloquear si hace falta y abrir su app (como en el iPhone). */
+    private fun openNotification(item: NotifItem) {
+        val open = {
+            NotificationsHub.open(this, item)
+            finish()
+        }
+        val keyguard = getSystemService(KeyguardManager::class.java)
+        if (keyguard != null && keyguard.isKeyguardLocked) {
+            keyguard.requestDismissKeyguard(this, object : KeyguardManager.KeyguardDismissCallback() {
+                override fun onDismissSucceeded() = open()
+            })
+        } else {
+            open()
+        }
+    }
 
     /** Salir: si el teléfono está bloqueado, pide huella/PIN y después cierra. */
     private fun leave() {

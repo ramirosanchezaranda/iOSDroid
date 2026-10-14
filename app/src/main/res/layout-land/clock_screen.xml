@@ -92,6 +92,15 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:orientation="vertical" />
+
+            <!-- Con notificaciones, ocupan el lugar del pronóstico. -->
+            <LinearLayout
+                android:id="@+id/ss_notifications"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="vertical"
+                android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>
 
@@ -99,8 +108,8 @@
         android:id="@+id/ss_exit"
         android:layout_width="wrap_content"
         android:layout_height="44dp"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="20dp"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="20dp"
         android:background="@drawable/exit_pill"
         android:gravity="center"
         android:paddingStart="22dp"
