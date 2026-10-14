@@ -36,6 +36,9 @@ Widget para la pantalla de inicio de Android con **hora, fecha y clima**, con es
   plano que escucha el apagado de pantalla y una notificación de pantalla completa (como las alarmas); se reactiva
   solo al reiniciar el teléfono.
 - **Notificaciones en el reloj**, con los gestos del iPhone y lo bueno de Android:
+  - Cuando hay notificaciones, el reloj se achica y sube (como la pantalla de bloqueo del iPhone): la fecha, la
+    hora y el clima en una línea arriba, y las notificaciones ocupan el resto (entran de 3 a 6 apps según el alto
+    de la pantalla; la más reciente con hasta 3 líneas). Sin notificaciones vuelve el reloj grande.
   - Agrupadas por app en pilas, con "ahora / hace 5 min". Tocar una notificación la abre (pide desbloquear si hace
     falta); tocar una pila la despliega.
   - Deslizar hacia arriba abre el **centro de notificaciones**: todas, con scroll, "Mostrar menos" y "Borrar todo"

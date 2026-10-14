@@ -65,7 +65,7 @@
                     android:layout_marginStart="10dp"
                     android:text="@string/sample_temp"
                     android:textFontWeight="300"
-                    android:textSize="46sp" />
+                    android:textSize="40sp" />
             </LinearLayout>
 
             <TextView

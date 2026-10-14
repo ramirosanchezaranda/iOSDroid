@@ -216,11 +216,69 @@ class ClockScreen(
     // --- Notificaciones (ver [NotificationsUi]) ---
 
     private fun renderNotifications(force: Boolean = false) {
+        notificationsUi.maxStacks = stacksThatFit()
         notificationsUi.update(NotificationsHub.items, force)
-        // En horizontal no entra todo: las notificaciones ocupan el lugar del pronóstico.
-        if (forecast.orientation == LinearLayout.VERTICAL) {
-            forecast.visibility = if (notificationsUi.hasItems || forecast.childCount == 0) View.GONE else View.VISIBLE
+        setCompact(notificationsUi.hasItems)
+        // Con notificaciones, ellas ocupan el lugar del pronóstico.
+        forecast.visibility = if (notificationsUi.hasItems || forecast.childCount == 0) View.GONE else View.VISIBLE
+    }
+
+    private val landscape get() = forecast.orientation == LinearLayout.VERTICAL
+
+    /**
+     * Con notificaciones, como en la pantalla de bloqueo del iPhone: el reloj se achica y sube,
+     * el clima queda en una línea y las notificaciones ocupan el resto de la pantalla.
+     * Sin notificaciones, vuelve el reloj grande.
+     */
+    private var compact: Boolean? = null
+
+    private fun setCompact(on: Boolean) {
+        if (compact == on) return
+        val first = compact == null
+        compact = on
+        if (!first && ValueAnimator.areAnimatorsEnabled() && root.isLaidOut) {
+            android.transition.TransitionManager.beginDelayedTransition(root as ViewGroup, android.transition.TransitionSet().apply {
+                addTransition(android.transition.ChangeBounds())
+                addTransition(android.transition.Fade())
+                duration = 320
+                interpolator = android.view.animation.DecelerateInterpolator(1.5f)
+            })
         }
+        if (landscape) {
+            (time.layoutParams as LinearLayout.LayoutParams).weight = if (on) 1.1f else 1.7f
+            date.textSize = if (on) 17f else 20f
+            temp.textSize = if (on) 30f else 40f
+            condition.textSize = if (on) 16f else 19f
+            detail.visibility = if (on) View.GONE else View.VISIBLE
+        } else {
+            root.findViewById<View>(R.id.ss_top_space).updateWeight(if (on) 0f else 1f, dp(if (on) 20 else 0))
+            root.findViewById<View>(R.id.ss_bottom_space).updateWeight(if (on) 0f else 1f, dp(if (on) 14 else 0))
+            notifications.updateWeight(if (on) 1f else 0f, if (on) 0 else ViewGroup.LayoutParams.WRAP_CONTENT)
+            val pad = dp(if (on) 14 else 30)
+            content.setPadding(content.paddingLeft, pad, content.paddingRight, pad)
+            date.textSize = if (on) 17f else 22f
+            temp.textSize = if (on) 19f else 26f
+            condition.textSize = if (on) 15f else 20f
+            detail.visibility = if (on) View.GONE else View.VISIBLE
+            val iconSize = dp(if (on) 22 else 30)
+            icon.layoutParams = icon.layoutParams.apply { width = iconSize; height = iconSize }
+        }
+        content.requestLayout()
+        time.post { fitTime(force = true) }
+    }
+
+    private fun View.updateWeight(weight: Float, height: Int) {
+        val lp = layoutParams as LinearLayout.LayoutParams
+        if (lp.weight == weight && lp.height == height) return
+        lp.weight = weight
+        lp.height = height
+        layoutParams = lp
+    }
+
+    /** Pilas que entran debajo del reloj chico según el alto de la pantalla (entre 3 y 6). */
+    private fun stacksThatFit(): Int {
+        val heightDp = (root.height.takeIf { it > 0 } ?: context.resources.displayMetrics.heightPixels) / density
+        return ((heightDp - CLOCK_COMPACT_DP) / STACK_DP).toInt().coerceIn(3, 6)
     }
 
     /** Que "Mañana" entre en su columna aunque la fuente sea ancha (todas del mismo tamaño, como en iOS). */
@@ -350,7 +408,15 @@ class ClockScreen(
         val widest = listOf("00:00", "88:88", "22:22", "44:44", "12:59").maxOf { paint.measureText(it) }
         var size = 100f * available / widest * 0.97f
         val landscape = context.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        val maxHeight = root.height * if (landscape) 0.62f else 0.34f
+        val small = compact == true
+        // Con notificaciones la hora cede lugar (y no ocupa todo el ancho).
+        if (small && !landscape) size *= 0.72f
+        val maxHeight = root.height * when {
+            landscape && small -> 0.42f
+            landscape -> 0.52f
+            small -> 0.15f
+            else -> 0.27f
+        }
         if (maxHeight > 0) size = min(size, maxHeight / 1.2f)
         time.setTextSize(TypedValue.COMPLEX_UNIT_PX, size)
     }
@@ -371,5 +437,8 @@ class ClockScreen(
         const val DRIFT_MS = 60_000L
         const val REFRESH_MS = 15 * 60_000L
         const val DAY_SP = 15f
+        /** Alto aproximado del reloj chico (fecha, hora y clima) y de cada pila de notificaciones. */
+        const val CLOCK_COMPACT_DP = 290f
+        const val STACK_DP = 104f
     }
 }

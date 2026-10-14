@@ -13,6 +13,7 @@
         android:orientation="vertical">
 
     <View
+        android:id="@+id/ss_top_space"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
@@ -68,7 +69,7 @@
                 android:layout_marginStart="10dp"
                 android:text="@string/sample_temp"
                 android:textFontWeight="500"
-                android:textSize="30sp" />
+                android:textSize="26sp" />
 
             <TextView
                 android:id="@+id/ss_condition"
@@ -98,6 +99,7 @@
     </LinearLayout>
 
     <View
+        android:id="@+id/ss_bottom_space"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />

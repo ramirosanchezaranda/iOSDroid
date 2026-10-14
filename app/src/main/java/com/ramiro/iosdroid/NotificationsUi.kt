@@ -129,6 +129,17 @@ class NotificationsUi(
     }
 
     /**
+     * Cuántas pilas entran debajo del reloj. Con notificaciones el reloj se achica (como la
+     * pantalla de bloqueo del iPhone) y ellas ocupan el resto: [ClockScreen] calcula cuántas.
+     */
+    var maxStacks = 3
+        set(value) {
+            if (field == value) return
+            field = value
+            if (rendered) pending = true
+        }
+
+    /**
      * [force]: cambió el estilo o un ajuste y hay que rearmar todo. Si no, con las mismas
      * notificaciones (el aviso de cada minuto) solo se actualiza "hace 5 min".
      */
@@ -171,7 +182,7 @@ class NotificationsUi(
 
     private fun renderInline() {
         val groups = NotificationsHub.groups(items)
-        val maxStacks = if (landscape) 2 else 3
+        val maxStacks = if (landscape) 2 else maxStacks
         val shown = groups.take(maxStacks)
         val keys = shown.flatMap { group -> group.map { it.key } }.toSet()
         val entering = shown.filter { shownKeys.isNotEmpty() && it.first().key !in shownKeys }.map { it.first().key }.toSet()
@@ -188,7 +199,13 @@ class NotificationsUi(
         val palette = inlinePalette()
         val locked = isLocked()
         shown.forEachIndexed { i, group ->
-            val row = stack(group, palette, locked, maxLines = if (landscape) 1 else 2) {
+            // La más reciente se lee entera (hasta 3 líneas), como en el iPhone.
+            val lines = when {
+                landscape -> 1
+                i == 0 -> 3
+                else -> 2
+            }
+            val row = stack(group, palette, locked, maxLines = lines) {
                 if (group.size > 1) openCenter(group.first().packageName) else host?.open(group.first())
             }
             row.transitionName = "inline:" + group.first().packageName

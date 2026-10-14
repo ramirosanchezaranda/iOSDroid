@@ -275,10 +275,11 @@ class WidgetSnapshotTest {
             var shown = texts(activity.findViewById(R.id.ss_notifications))
             assertTrue("Ana" in shown)
             assertTrue(shown.any { "Juan Pérez" in it })
-            // Agrupadas por app: WhatsApp es una pila; Trenes y Calendario quedan para el centro.
+            // Agrupadas por app: WhatsApp es una pila. Con el reloj chico entran las 5 apps.
             assertTrue("1 notificación más" in shown)
-            assertTrue("2 notificaciones más" in shown)
             assertFalse("Familia" in shown)
+            assertTrue("Línea Mitre" in shown)
+            assertTrue("Reunión" in shown)
             activity.finish()
 
             // Con "Ocultar contenido sensible" en Android, lo privado se oculta.
