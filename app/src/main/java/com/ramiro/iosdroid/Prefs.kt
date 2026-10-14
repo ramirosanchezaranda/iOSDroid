@@ -78,6 +78,15 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("saver_dim", false)
         set(v) = sp.edit().putBoolean("saver_dim", v).apply()
 
+    /** Mostrar el reloj cada vez que se bloquea el teléfono. */
+    var lockClock: Boolean
+        get() = sp.getBoolean("lock_clock", false)
+        set(v) = sp.edit().putBoolean("lock_clock", v).apply()
+
+    var lockMode: LockMode
+        get() = LockMode.from(sp.getString("lock_mode", null))
+        set(v) = sp.edit().putString("lock_mode", v.key).apply()
+
     fun listen(listener: SharedPreferences.OnSharedPreferenceChangeListener) =
         sp.registerOnSharedPreferenceChangeListener(listener)
 

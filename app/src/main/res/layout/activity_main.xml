@@ -230,6 +230,65 @@
 
         <TextView
             style="@style/SectionHeader"
+            android:text="@string/section_lock" />
+
+        <LinearLayout style="@style/Card">
+
+            <LinearLayout
+                android:id="@+id/lock_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/row_highlight"
+                android:gravity="center_vertical"
+                android:minHeight="50dp"
+                android:orientation="horizontal"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/lock_title"
+                    android:textColor="@color/ios_label"
+                    android:textSize="17sp" />
+
+                <Switch
+                    android:id="@+id/lock_switch"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:contentDescription="@string/lock_title"
+                    android:showText="false"
+                    android:switchMinWidth="51dp"
+                    android:thumb="@drawable/ios_switch_thumb"
+                    android:track="@drawable/ios_switch_track" />
+            </LinearLayout>
+
+            <View
+                android:id="@+id/lock_mode_sep"
+                style="@style/Separator" />
+
+            <LinearLayout
+                android:id="@+id/seg_lock_mode"
+                style="@style/Segmented" />
+
+            <View
+                android:id="@+id/lock_permission_sep"
+                style="@style/Separator" />
+
+            <TextView
+                android:id="@+id/lock_permission"
+                style="@style/Row.Disclosure"
+                android:text="@string/lock_permission"
+                android:textColor="@color/ios_blue" />
+        </LinearLayout>
+
+        <TextView
+            style="@style/Footnote"
+            android:text="@string/lock_note" />
+
+        <TextView
+            style="@style/SectionHeader"
             android:text="@string/section_saver" />
 
         <LinearLayout style="@style/Card">

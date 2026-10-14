@@ -7,6 +7,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
 import android.graphics.Outline
+import android.net.Uri
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
@@ -62,9 +63,14 @@ class MainActivity : ComponentActivity() {
     private var previewSize = 2
     private var wallpaper = 0
     private var searchJob: Job? = null
+    private var askedNotifications = false
 
     private val askLocation = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) locateMe() else toast(R.string.location_denied)
+    }
+
+    private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+        renderLockState()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -124,6 +130,7 @@ class MainActivity : ComponentActivity() {
             WeatherWorker.refreshNow(this)
         }
         setupFonts()
+        setupLock()
         setupClockMode()
 
         findViewById<View>(R.id.pin).apply {
@@ -163,6 +170,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        // Al volver de Ajustes (permisos) o si el sistema detuvo el servicio.
+        LockClock.sync(this)
+        renderLockState()
         renderCity()
         renderPreview()
         renderStatus()
@@ -335,6 +345,63 @@ class MainActivity : ComponentActivity() {
             val selected = row.getChildAt(prefs.clockFont.ordinal) ?: return@post
             scroll.scrollTo(max(0, selected.left - dp(12f)), 0)
         }
+    }
+
+    // --- Reloj al bloquear el teléfono ---
+
+    private fun setupLock() {
+        val switch = findViewById<Switch>(R.id.lock_switch)
+        switch.isChecked = prefs.lockClock
+        switch.setOnCheckedChangeListener { view, on ->
+            selectionTick(view)
+            prefs.lockClock = on
+            if (on && Build.VERSION.SDK_INT >= 33 && !LockClock.notificationsAllowed(this)) {
+                askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            LockClock.sync(this)
+            renderLockState()
+        }
+        findViewById<View>(R.id.lock_row).setOnClickListener { switch.toggle() }
+        segmented(
+            R.id.seg_lock_mode,
+            listOf(R.string.lock_mode_always, R.string.lock_mode_charging, R.string.lock_mode_normal),
+            prefs.lockMode.ordinal,
+        ) { prefs.lockMode = LockMode.entries[it] }
+        findViewById<View>(R.id.lock_permission).setOnClickListener { openLockPermission() }
+    }
+
+    private fun renderLockState() {
+        val on = prefs.lockClock
+        val modeVisibility = if (on) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.lock_mode_sep).visibility = modeVisibility
+        findViewById<View>(R.id.seg_lock_mode).visibility = modeVisibility
+        val notifications = LockClock.notificationsAllowed(this)
+        val missing = on && (!notifications || !LockClock.fullScreenAllowed(this))
+        val permissionVisibility = if (missing) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.lock_permission_sep).visibility = permissionVisibility
+        findViewById<TextView>(R.id.lock_permission).apply {
+            visibility = permissionVisibility
+            setText(if (notifications) R.string.lock_permission else R.string.lock_notifications)
+        }
+    }
+
+    /** Lleva al permiso que falta: notificaciones o pantalla completa (Android 14+). */
+    private fun openLockPermission() {
+        val app = Uri.parse("package:$packageName")
+        val intent = when {
+            // Primero se pide; si ya se negó, se abre la pantalla de notificaciones de la app.
+            !LockClock.notificationsAllowed(this) && Build.VERSION.SDK_INT >= 33 && !askedNotifications -> {
+                askedNotifications = true
+                askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+                return
+            }
+            !LockClock.notificationsAllowed(this) ->
+                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            Build.VERSION.SDK_INT >= 34 -> Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT, app)
+            else -> Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, app)
+        }
+        runCatching { startActivity(intent) }
+            .onFailure { runCatching { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, app)) } }
     }
 
     // --- Modo reloj y protector de pantalla ---

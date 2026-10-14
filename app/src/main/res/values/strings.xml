@@ -110,6 +110,22 @@
     <string name="dream_unavailable">Este teléfono no permite abrir el protector de pantalla. Usa el modo reloj.</string>
     <string name="saver_note">El modo reloj deja la pantalla siempre encendida mientras está abierto (conviene con el cargador) y se sigue viendo aunque el teléfono se bloquee. Toca una vez y luego «Salir» para cerrarlo.\n\nEl protector de pantalla se activa solo mientras el teléfono carga. En ColorOS esa opción está oculta en Ajustes: el botón la abre directamente, y ahí eliges «Reloj Glass».\n\nPara cuidar la pantalla, el reloj se mueve un poco cada minuto.</string>
     <string name="clock_exit">Salir</string>
+    <string name="clock_unlock">Desbloquear</string>
+
+    <!-- Reloj al bloquear -->
+    <string name="section_lock">Pantalla bloqueada</string>
+    <string name="lock_title">Mostrar al bloquear el teléfono</string>
+    <string name="lock_mode_always">Siempre</string>
+    <string name="lock_mode_charging">Al cargar</string>
+    <string name="lock_mode_normal">Normal</string>
+    <string name="lock_permission">Permitir sobre la pantalla bloqueada</string>
+    <string name="lock_notifications">Permitir notificaciones</string>
+    <string name="lock_note">Cada vez que bloqueas el teléfono aparece el reloj encima de la pantalla de bloqueo.\n\n• Siempre: la pantalla queda prendida con el reloj. Si lo guardas en el bolsillo o lo pones boca abajo, el sensor de proximidad la apaga.\n• Al cargar: queda prendida solo mientras está enchufado.\n• Normal: el reloj aparece al encender la pantalla y se apaga sola.\n\nPara volver al teléfono, desbloquea con huella o cara, o toca la pantalla → «Desbloquear». Si apagas la pantalla con el botón mientras ves el reloj, se apaga de verdad.\n\nEn ColorOS, para que no se detenga: Ajustes → Batería → iOSDroid → permitir actividad en segundo plano.</string>
+    <string name="lock_channel_service">Reloj en pantalla bloqueada (activo)</string>
+    <string name="lock_channel_show">Mostrar el reloj al bloquear</string>
+    <string name="lock_service_title">Reloj en pantalla bloqueada</string>
+    <string name="lock_service_text">El reloj aparece cada vez que bloqueas el teléfono</string>
+    <string name="lock_show_text">Toca para ver el reloj</string>
     <string name="clock_mode">Modo reloj</string>
     <string name="clock_mode_long">Abrir modo reloj</string>
     <string name="dream_name">Reloj Glass</string>

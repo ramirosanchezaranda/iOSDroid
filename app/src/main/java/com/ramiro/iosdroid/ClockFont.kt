@@ -52,3 +52,19 @@ enum class SaverBackground(val key: String) {
         fun from(key: String?) = entries.firstOrNull { it.key == key } ?: BLACK
     }
 }
+
+/** Qué pasa con la pantalla cuando el reloj aparece al bloquear el teléfono. */
+enum class LockMode(val key: String) {
+    /** La pantalla queda encendida con el reloj. */
+    ALWAYS("always"),
+
+    /** Encendida solo mientras carga; si no, se apaga sola como siempre. */
+    CHARGING("charging"),
+
+    /** El reloj aparece al encender la pantalla, que se apaga sola. */
+    NORMAL("normal");
+
+    companion object {
+        fun from(key: String?) = entries.firstOrNull { it.key == key } ?: ALWAYS
+    }
+}
