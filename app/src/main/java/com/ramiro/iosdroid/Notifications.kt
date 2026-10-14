@@ -45,8 +45,11 @@ data class NotifItem(
     /** Se puede borrar (las persistentes ya se filtran, pero algunas apps no dejan borrar). */
     val clearable: Boolean = true,
 ) {
-    /** Ícono de la app (se carga al dibujar, no se guarda en el modelo). */
-    fun icon(context: Context): Drawable? = runCatching { context.packageManager.getApplicationIcon(packageName) }.getOrNull()
+    /** Ícono de la app (se carga al dibujar y queda en memoria; no se guarda en el modelo). */
+    fun icon(context: Context): Drawable? = NotificationsHub.appIcon(context, packageName)
+
+    /** Lo que se ve de la notificación: si no cambió, no hace falta redibujar. */
+    val signature get() = "$key|$postTime|$title|$text|${actions.size}|${picture != null}"
 }
 
 /** Las notificaciones activas, compartidas entre el servicio que las lee y las pantallas de reloj. */
@@ -70,6 +73,8 @@ object NotificationsHub {
 
     /** Las saca de la lista ya mismo (sin esperar al sistema); se filtra sobre la lista vigente al publicar. */
     private fun remove(keys: Set<String>) {
+        // Si el sistema no llega a borrarla (algunas apps no dejan), el próximo aviso la vuelve a mostrar.
+        NotificationsService.instance?.invalidate()
         main.post { publishNow(items.filter { it.key !in keys }) }
     }
 
@@ -109,9 +114,7 @@ object NotificationsHub {
         val text = lastMessage(n) ?: (extras.getCharSequence(Notification.EXTRA_BIG_TEXT)
             ?: extras.getCharSequence(Notification.EXTRA_TEXT))?.toString()?.trim().orEmpty()
         if (title.isBlank() && text.isBlank()) return null
-        val appName = runCatching {
-            context.packageManager.getApplicationLabel(context.packageManager.getApplicationInfo(packageName, 0)).toString()
-        }.getOrDefault(packageName)
+        val appName = appName(context, packageName)
         val publicText = n.publicVersion?.extras?.let {
             (it.getCharSequence(Notification.EXTRA_TITLE) ?: it.getCharSequence(Notification.EXTRA_TEXT))?.toString()
         }
@@ -148,6 +151,19 @@ object NotificationsHub {
             clearable = n.flags and Notification.FLAG_NO_CLEAR == 0,
         )
     }
+
+    // Nombres e íconos de las apps: leerlos del sistema es caro y casi nunca cambian (la caché vive
+    // lo que vive el proceso).
+    private val names = android.util.LruCache<String, String>(64)
+    private val icons = android.util.LruCache<String, Drawable>(32)
+
+    fun appName(context: Context, packageName: String): String = names.get(packageName) ?: runCatching {
+        context.packageManager.getApplicationLabel(context.packageManager.getApplicationInfo(packageName, 0)).toString()
+    }.getOrDefault(packageName).also { names.put(packageName, it) }
+
+    fun appIcon(context: Context, packageName: String): Drawable? = icons.get(packageName) ?: runCatching {
+        context.packageManager.getApplicationIcon(packageName)
+    }.getOrNull()?.also { icons.put(packageName, it) }
 
     /** Agrupadas por app, como las pilas del iPhone (la app con la más reciente, primero). */
     fun groups(items: List<NotifItem>): List<List<NotifItem>> =
@@ -245,6 +261,7 @@ class NotificationsService : NotificationListenerService() {
 
     override fun onListenerDisconnected() {
         if (instance === this) instance = null
+        lastSignature = null
         NotificationsHub.publish(emptyList())
     }
 
@@ -262,7 +279,18 @@ class NotificationsService : NotificationListenerService() {
             val importance = if (ranking?.getRanking(sbn.key, r) == true) r.importance else NotificationManager.IMPORTANCE_UNSPECIFIED
             NotificationsHub.fromNotification(this, sbn.key, sbn.packageName, sbn.notification, sbn.postTime, importance)
         }.sortedByDescending { it.postTime }
+        // El sistema avisa cambios de orden muy seguido: si lo que se ve es igual, no se redibuja nada.
+        val signature = items.map { it.signature }
+        if (signature == lastSignature) return
+        lastSignature = signature
         NotificationsHub.publish(items)
+    }
+
+    @Volatile
+    private var lastSignature: List<String>? = null
+
+    fun invalidate() {
+        lastSignature = null
     }
 
     companion object {

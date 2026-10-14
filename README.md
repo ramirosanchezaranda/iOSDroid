@@ -90,3 +90,17 @@ Headline, Body, Footnote), grupos en tarjetas, filas con ›, interruptores y co
 - `app/signing/iosdroid.jks` es una llave de uso personal incluida a propósito para que cualquier build (local o CI) se
   pueda instalar encima de la anterior sin desinstalar. No usarla para publicar en Play Store.
 - Datos del clima: Open-Meteo.com (CC BY 4.0).
+
+## Batería
+
+- **Reloj al bloquear, sin cargador** ("Ahorro de batería", activado por defecto): al minuto sin tocarlo baja el
+  brillo al mínimo y a los 10 minutos deja que la pantalla se apague. Con batería baja (15 % o menos) o con el
+  ahorro de energía de Android, la pantalla se apaga como siempre. Al tocarlo vuelve todo.
+- **Clima**: una vez por hora y solo si la batería no está baja; el reloj y los widgets piden datos nuevos solo si
+  los que hay tienen más de 30 minutos (90 con batería baja).
+- **Servicio en segundo plano**: solo escucha el paso de cada minuto si hay widgets con fuente propia, y aun así
+  redibuja solo con la pantalla encendida.
+- **Notificaciones**: si el sistema avisa un cambio que no cambia lo que se ve, no se redibuja nada; cada minuto
+  solo se actualiza "hace 5 min". Los nombres e íconos de las apps y los colores del fondo de pantalla quedan en
+  memoria en lugar de pedirse al sistema cada vez.
+

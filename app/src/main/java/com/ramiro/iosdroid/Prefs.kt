@@ -119,6 +119,9 @@ class Prefs(context: Context) {
 
     fun muteApp(packageName: String, until: Long) {
         val o = runCatching { JSONObject(sp.getString("muted_apps", null) ?: "{}") }.getOrDefault(JSONObject())
+        // De paso se limpian las que ya vencieron.
+        val now = System.currentTimeMillis()
+        o.keys().asSequence().toList().filter { o.optLong(it) <= now }.forEach { o.remove(it) }
         o.put(packageName, until)
         sp.edit().putString("muted_apps", o.toString()).apply()
     }
@@ -131,6 +134,16 @@ class Prefs(context: Context) {
     var lockMode: LockMode
         get() = LockMode.from(sp.getString("lock_mode", null))
         set(v) = sp.edit().putString("lock_mode", v.key).apply()
+
+    /** Qué versión de la actualización periódica del clima está programada. */
+    var weatherScheduleVersion: Int
+        get() = sp.getInt("weather_schedule_version", 0)
+        set(v) = sp.edit().putInt("weather_schedule_version", v).apply()
+
+    /** Sin cargador, el reloj al bloquear baja el brillo y después deja que la pantalla se apague. */
+    var lockBatterySaver: Boolean
+        get() = sp.getBoolean("lock_battery_saver", true)
+        set(v) = sp.edit().putBoolean("lock_battery_saver", v).apply()
 
     fun listen(listener: SharedPreferences.OnSharedPreferenceChangeListener) =
         sp.registerOnSharedPreferenceChangeListener(listener)

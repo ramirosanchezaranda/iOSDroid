@@ -52,14 +52,26 @@ class WeatherWorker(context: Context, params: WorkerParameters) : CoroutineWorke
         private const val PERIODIC = "weather_periodic"
         const val NOW = "weather_now"
 
+        /** Versión de la tarea periódica: al cambiarla, se reemplaza la programada en versiones anteriores. */
+        private const val PERIODIC_VERSION = 2
+        private const val PERIODIC_MINUTES = 60L
+
         private val network = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
 
+        // La periódica espera a que haya batería: con batería baja el clima puede esperar.
+        private val periodicConstraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .setRequiresBatteryNotLow(true)
+            .build()
+
         fun schedule(context: Context) {
-            val request = PeriodicWorkRequestBuilder<WeatherWorker>(30, TimeUnit.MINUTES)
-                .setConstraints(network)
+            val prefs = Prefs(context)
+            val policy = if (prefs.weatherScheduleVersion == PERIODIC_VERSION) ExistingPeriodicWorkPolicy.KEEP else ExistingPeriodicWorkPolicy.UPDATE
+            val request = PeriodicWorkRequestBuilder<WeatherWorker>(PERIODIC_MINUTES, TimeUnit.MINUTES, 15, TimeUnit.MINUTES)
+                .setConstraints(periodicConstraints)
                 .build()
-            WorkManager.getInstance(context)
-                .enqueueUniquePeriodicWork(PERIODIC, ExistingPeriodicWorkPolicy.KEEP, request)
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(PERIODIC, policy, request)
+            prefs.weatherScheduleVersion = PERIODIC_VERSION
         }
 
         fun refreshNow(context: Context) {
@@ -68,13 +80,16 @@ class WeatherWorker(context: Context, params: WorkerParameters) : CoroutineWorke
             WorkManager.getInstance(context).enqueueUniqueWork(NOW, ExistingWorkPolicy.REPLACE, request)
         }
 
-        /** Pide datos nuevos solo si los actuales tienen más de 20 min (y no se pidió hace poco). */
+        /**
+         * Pide datos nuevos solo si los actuales son viejos (30 min; 90 min con batería baja) y no
+         * se pidió hace poco. Lo llaman el reloj y los widgets al mostrarse.
+         */
         fun refreshIfStale(context: Context) {
             val prefs = Prefs(context)
             val now = System.currentTimeMillis()
             val weather = prefs.weather
-            val stale = weather == null || weather.unit != prefs.unit ||
-                now - weather.updatedAt > TimeUnit.MINUTES.toMillis(20)
+            val maxAge = TimeUnit.MINUTES.toMillis(if (Power.low(context)) 90 else 30)
+            val stale = weather == null || weather.unit != prefs.unit || now - weather.updatedAt > maxAge
             if (stale && now - prefs.lastRefreshRequest > TimeUnit.MINUTES.toMillis(5)) refreshNow(context)
         }
 

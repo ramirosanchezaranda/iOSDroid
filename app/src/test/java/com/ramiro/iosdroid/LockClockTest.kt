@@ -41,9 +41,14 @@ class LockClockTest {
         opened.forEach { runCatching { it.pause().stop().destroy() } }
     }
 
+    private val battery get() = shadowOf(ctx.getSystemService(android.os.BatteryManager::class.java))
+
     @Before
     fun setUp() {
         WorkManagerTestInitHelper.initializeTestWorkManager(ctx)
+        // Sin cargador y con batería de sobra (lo normal en el bolsillo).
+        battery.setIsCharging(false)
+        battery.setIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY, 80)
         Prefs(ctx).apply {
             lockClock = true
             lockMode = LockMode.ALWAYS
@@ -177,6 +182,56 @@ class LockClockTest {
             NotificationsHub.publish(emptyList())
             shadowOf(Looper.getMainLooper()).idle()
         }
+    }
+
+    private fun keepsOn(activity: ClockActivity) =
+        activity.window.attributes.flags and WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON != 0
+
+    @Test
+    fun batterySaverDimsThenLetsTheScreenTurnOff() {
+        val activity = open().get()
+        assertTrue(keepsOn(activity))
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(61))
+        // Al minuto sin tocarlo: brillo al mínimo, pero sigue prendida.
+        assertEquals(0.01f, activity.window.attributes.screenBrightness, 0.001f)
+        assertTrue(keepsOn(activity))
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMinutes(10))
+        // A los 10 minutos se deja que la pantalla se apague sola.
+        assertFalse(keepsOn(activity))
+        // Al tocarlo vuelve todo.
+        activity.onUserInteraction()
+        assertTrue(keepsOn(activity))
+        assertEquals(WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE, activity.window.attributes.screenBrightness, 0.001f)
+    }
+
+    @Test
+    fun chargingStaysOnAndBright() {
+        battery.setIsCharging(true)
+        val activity = open().get()
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMinutes(15))
+        assertTrue(keepsOn(activity))
+        assertEquals(WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE, activity.window.attributes.screenBrightness, 0.001f)
+    }
+
+    @Test
+    fun lowBatteryLetsTheScreenTurnOff() {
+        battery.setIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY, 10)
+        assertFalse(keepsOn(open().get()))
+    }
+
+    @Test
+    fun withoutSaverAlwaysModeNeverDims() {
+        Prefs(ctx).lockBatterySaver = false
+        val activity = open().get()
+        shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofMinutes(15))
+        assertTrue(keepsOn(activity))
+    }
+
+    @Test
+    fun serviceSkipsTheMinuteTickWithoutCustomFontWidgets() {
+        Robolectric.buildService(ClockService::class.java).create().startCommand(0, 1)
+        val ticks = app.registeredReceivers.filter { it.intentFilter.hasAction(Intent.ACTION_TIME_TICK) }
+        assertTrue(ticks.isEmpty())
     }
 
     @Test

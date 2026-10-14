@@ -62,7 +62,8 @@ class ClockScreen(
     private val notifications: LinearLayout = root.findViewById(R.id.ss_notifications)
     /** Pilas, centro de notificaciones y gestos. */
     val notificationsUi = NotificationsUi(context, root as android.view.ViewGroup, notifications, host)
-    private val notificationsListener: (List<NotifItem>) -> Unit = { bind() }
+    // Solo se redibujan las notificaciones (no todo el reloj) cuando llega o se va una.
+    private val notificationsListener: (List<NotifItem>) -> Unit = { renderNotifications() }
 
     private var primary = Color.WHITE
     private var secondary = Color.WHITE
@@ -160,14 +161,7 @@ class ClockScreen(
         applyColors(if (tone == TextTone.DARK) Color.rgb(28, 28, 30) else Color.WHITE)
         notificationsUi.setStyle(glass, tone == TextTone.DARK, primary, landscape = forecast.orientation == LinearLayout.VERTICAL)
 
-        val dim = prefs.saverDim
-        content.alpha = if (dim) 0.6f else 1f
-        notifications.alpha = content.alpha
-        if (controlBrightness) {
-            window.attributes = window.attributes.apply {
-                screenBrightness = if (dim) 0.03f else WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
-            }
-        }
+        applyDim()
 
         val weather = prefs.weather
         val city = prefs.place?.name?.ifBlank { null }
@@ -186,13 +180,43 @@ class ClockScreen(
             detail.text = city.orEmpty()
         }
         bindForecast(weather)
-        renderNotifications()
+        renderNotifications(force = true)
+    }
+
+    /**
+     * Ahorro de batería: brillo al mínimo y contenido más tenue (en OLED, menos píxeles
+     * encendidos). Lo activa [ClockActivity] cuando nadie lo toca y no hay cargador.
+     */
+    var batterySaving = false
+        set(value) {
+            if (field == value) return
+            field = value
+            applyDim()
+        }
+
+    private fun applyDim() {
+        val dim = prefs.saverDim || batterySaving
+        content.alpha = when {
+            batterySaving -> 0.45f
+            dim -> 0.6f
+            else -> 1f
+        }
+        notifications.alpha = content.alpha
+        if (controlBrightness) {
+            window.attributes = window.attributes.apply {
+                screenBrightness = when {
+                    batterySaving -> 0.01f
+                    dim -> 0.03f
+                    else -> WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+                }
+            }
+        }
     }
 
     // --- Notificaciones (ver [NotificationsUi]) ---
 
-    private fun renderNotifications() {
-        notificationsUi.update(NotificationsHub.items)
+    private fun renderNotifications(force: Boolean = false) {
+        notificationsUi.update(NotificationsHub.items, force)
         // En horizontal no entra todo: las notificaciones ocupan el lugar del pronóstico.
         if (forecast.orientation == LinearLayout.VERTICAL) {
             forecast.visibility = if (notificationsUi.hasItems || forecast.childCount == 0) View.GONE else View.VISIBLE

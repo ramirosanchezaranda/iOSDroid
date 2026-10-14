@@ -300,15 +300,34 @@ object WidgetRenderer {
     fun resolveTone(context: Context, style: GlassStyle, tone: TextTone): TextTone {
         if (tone != TextTone.AUTO) return tone
         if (style == GlassStyle.SMOKED) return TextTone.LIGHT
+        return if (wallpaperWantsDarkText(context)) TextTone.DARK else TextTone.LIGHT
+    }
+
+    // Leer los colores del fondo de pantalla es una consulta al sistema: se recuerda un rato
+    // (los widgets con fuente propia se redibujan cada minuto).
+    private const val WALLPAPER_TTL_MS = 5 * 60_000L
+    @Volatile private var wallpaperDark: Boolean? = null
+    @Volatile private var wallpaperReadAt = 0L
+
+    private fun wallpaperWantsDarkText(context: Context): Boolean {
+        val now = android.os.SystemClock.elapsedRealtime()
+        wallpaperDark?.takeIf { now - wallpaperReadAt < WALLPAPER_TTL_MS }?.let { return it }
         val colors = runCatching {
             WallpaperManager.getInstance(context).getWallpaperColors(WallpaperManager.FLAG_SYSTEM)
-        }.getOrNull() ?: return TextTone.LIGHT
-        val darkText = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            (colors.colorHints and WallpaperColors.HINT_SUPPORTS_DARK_TEXT) != 0
-        } else {
-            Color.luminance(colors.primaryColor.toArgb()) > 0.6f
+        }.getOrNull()
+        val dark = when {
+            colors == null -> false
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> (colors.colorHints and WallpaperColors.HINT_SUPPORTS_DARK_TEXT) != 0
+            else -> Color.luminance(colors.primaryColor.toArgb()) > 0.6f
         }
-        return if (darkText) TextTone.DARK else TextTone.LIGHT
+        wallpaperDark = dark
+        wallpaperReadAt = now
+        return dark
+    }
+
+    /** Cambió el fondo de pantalla: volver a leer sus colores. */
+    fun forgetWallpaper() {
+        wallpaperDark = null
     }
 
     private fun activity(context: Context, requestCode: Int, intent: Intent): PendingIntent =

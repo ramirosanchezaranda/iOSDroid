@@ -128,8 +128,22 @@ class NotificationsUi(
         this.landscape = landscape
     }
 
-    fun update(all: List<NotifItem>) {
-        items = if (prefs.clockNotifications) NotificationsHub.visible(context, all) else emptyList()
+    /**
+     * [force]: cambió el estilo o un ajuste y hay que rearmar todo. Si no, con las mismas
+     * notificaciones (el aviso de cada minuto) solo se actualiza "hace 5 min".
+     */
+    fun update(all: List<NotifItem>, force: Boolean = false) {
+        val next = if (prefs.clockNotifications) NotificationsHub.visible(context, all) else emptyList()
+        val locked = isLocked()
+        val same = !force && !pending && rendered && locked == renderedLocked &&
+            next.map { it.signature } == items.map { it.signature }
+        renderedLocked = locked
+        if (same) {
+            items = next
+            refreshTimes(root)
+            return
+        }
+        items = next
         // No se redibuja debajo del dedo ni con una tarjeta abierta: se hace al soltar.
         if (touching > 0 || openRow != null) {
             pending = true
@@ -142,8 +156,12 @@ class NotificationsUi(
         if (pending && touching == 0 && openRow == null) render()
     }
 
+    private var rendered = false
+    private var renderedLocked = false
+
     private fun render() {
         pending = false
+        rendered = true
         renderInline()
         center?.let { if (items.isEmpty()) closeCenter() else it.render() }
         sheet?.let { s -> if (items.none { it.key in s.keys }) closeSheet() }
@@ -485,6 +503,7 @@ class NotificationsUi(
                     }, LinearLayout.LayoutParams(0, WRAP, 1f))
                     addView(TextView(context).apply {
                         this.text = ago(item.postTime)
+                        tag = PostTime(item.postTime)
                         style(13f, palette.secondary, 400)
                     }, LinearLayout.LayoutParams(WRAP, WRAP).apply { marginStart = dp(8) })
                 })
@@ -771,6 +790,7 @@ class NotificationsUi(
                 }, LinearLayout.LayoutParams(0, WRAP, 1f).apply { marginStart = dp(8) })
                 addView(TextView(context).apply {
                     text = ago(item.postTime)
+                    tag = PostTime(item.postTime)
                     style(14f, palette.secondary, 400)
                 })
             })
@@ -1158,6 +1178,18 @@ class NotificationsUi(
             }
         }
         view.clipToOutline = true
+    }
+
+    /** Marca los textos "hace 5 min" para actualizarlos sin rearmar las tarjetas. */
+    private class PostTime(val millis: Long)
+
+    private fun refreshTimes(view: View) {
+        val tag = view.tag
+        if (view is TextView && tag is PostTime) {
+            val text = ago(tag.millis)
+            if (view.text.toString() != text) view.text = text
+        }
+        if (view is ViewGroup) for (i in 0 until view.childCount) refreshTimes(view.getChildAt(i))
     }
 
     private fun ago(postTime: Long): String {

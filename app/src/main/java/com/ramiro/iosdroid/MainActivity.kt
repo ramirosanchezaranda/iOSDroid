@@ -204,7 +204,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Al volver de Ajustes (permisos) o si el sistema detuvo el servicio.
+        // Al volver de Ajustes (permisos, fondo de pantalla) o si el sistema detuvo el servicio.
+        WidgetRenderer.forgetWallpaper()
         ClockService.sync(this)
         renderLockState()
         renderNotificationState()
@@ -525,6 +526,13 @@ class MainActivity : ComponentActivity() {
             listOf(R.string.lock_mode_always, R.string.lock_mode_charging, R.string.lock_mode_normal),
             prefs.lockMode.ordinal,
         ) { prefs.lockMode = LockMode.entries[it] }
+        val saver = findViewById<Switch>(R.id.lock_saver_switch)
+        saver.isChecked = prefs.lockBatterySaver
+        saver.setOnCheckedChangeListener { view, on ->
+            selectionTick(view)
+            prefs.lockBatterySaver = on
+        }
+        findViewById<View>(R.id.lock_saver_row).setOnClickListener { saver.toggle() }
         findViewById<View>(R.id.lock_permission).setOnClickListener { openLockPermission() }
     }
 
@@ -533,6 +541,8 @@ class MainActivity : ComponentActivity() {
         val modeVisibility = if (on) View.VISIBLE else View.GONE
         findViewById<View>(R.id.lock_mode_sep).visibility = modeVisibility
         findViewById<View>(R.id.seg_lock_mode).visibility = modeVisibility
+        findViewById<View>(R.id.lock_saver_sep).visibility = modeVisibility
+        findViewById<View>(R.id.lock_saver_row).visibility = modeVisibility
         val notifications = LockClock.notificationsAllowed(this)
         val missing = on && (!notifications || !LockClock.fullScreenAllowed(this))
         val permissionVisibility = if (missing) View.VISIBLE else View.GONE

@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -40,6 +39,8 @@ class ClockActivity : ComponentActivity(), NotificationHost {
     private var proximityLock: PowerManager.WakeLock? = null
     private var receiverRegistered = false
     private var unlockDrag = false
+    /** Ahorro de batería: pasó el tiempo sin tocarlo y se deja que la pantalla se apague. */
+    private var idleTimedOut = false
     private val back = object : androidx.activity.OnBackPressedCallback(false) {
         override fun handleOnBackPressed() {
             screen?.notificationsUi?.closeTop()
@@ -48,6 +49,12 @@ class ClockActivity : ComponentActivity(), NotificationHost {
 
     /** Para los tests. */
     internal val notificationsUi get() = screen?.notificationsUi
+
+    private val idleDim = Runnable { screen?.batterySaving = true }
+    private val idleOff = Runnable {
+        idleTimedOut = true
+        applyScreenMode(turnOn = false)
+    }
 
     private val hideExit = Runnable {
         exit.animate().alpha(0f).withEndAction { exit.visibility = View.GONE }.start()
@@ -58,7 +65,8 @@ class ClockActivity : ComponentActivity(), NotificationHost {
             when (intent.action) {
                 // Desbloqueaste con huella, cara o PIN: volvés directo al teléfono.
                 Intent.ACTION_USER_PRESENT -> if (fromLock) finish()
-                Intent.ACTION_POWER_CONNECTED, Intent.ACTION_POWER_DISCONNECTED -> applyScreenMode(turnOn = false)
+                Intent.ACTION_POWER_CONNECTED, Intent.ACTION_POWER_DISCONNECTED,
+                PowerManager.ACTION_POWER_SAVE_MODE_CHANGED -> wake()
             }
         }
     }
@@ -133,6 +141,7 @@ class ClockActivity : ComponentActivity(), NotificationHost {
             addAction(Intent.ACTION_USER_PRESENT)
             addAction(Intent.ACTION_POWER_CONNECTED)
             addAction(Intent.ACTION_POWER_DISCONNECTED)
+            addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
         }
         ContextCompat.registerReceiver(this, systemEvents, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
         receiverRegistered = true
@@ -155,12 +164,15 @@ class ClockActivity : ComponentActivity(), NotificationHost {
     override fun onResume() {
         super.onResume()
         resumed = true
+        wake()
         if (keepsScreenOn() && fromLock) acquireProximity()
         // La pantalla ya se encendió: que no se vuelva a encender sola cada vez que se reanude.
         handler.postDelayed({ setTurnOn(false) }, 1_000)
     }
 
     override fun onPause() {
+        handler.removeCallbacks(idleDim)
+        handler.removeCallbacks(idleOff)
         resumed = false
         lastPausedAt = SystemClock.elapsedRealtime()
         releaseProximity()
@@ -184,9 +196,32 @@ class ClockActivity : ComponentActivity(), NotificationHost {
         if (hasFocus) hideSystemBars()
     }
 
+    override fun onUserInteraction() {
+        super.onUserInteraction()
+        wake()
+    }
+
+    /** Lo tocaste (o cambió el cargador): brillo normal y vuelve a contar el tiempo sin uso. */
+    private fun wake() {
+        handler.removeCallbacks(idleDim)
+        handler.removeCallbacks(idleOff)
+        screen?.batterySaving = false
+        if (idleTimedOut) idleTimedOut = false
+        applyScreenMode(turnOn = false)
+        if (savesBattery() && keepsScreenOn()) {
+            handler.postDelayed(idleDim, IDLE_DIM_MS)
+            handler.postDelayed(idleOff, IDLE_OFF_MS)
+        }
+    }
+
+    /** "Ahorro de batería" solo aplica al reloj que aparece al bloquear, y sin cargador. */
+    private fun savesBattery() = fromLock && Prefs(this).lockBatterySaver && !Power.charging(this)
+
     /** Abierto a mano, siempre encendida. Al bloquear, según el modo elegido. */
     private fun keepsScreenOn(): Boolean {
         if (!fromLock) return true
+        // Con poca batería o con el ahorro de energía de Android, la pantalla se apaga como siempre.
+        if (savesBattery() && (idleTimedOut || Power.low(this))) return false
         return when (Prefs(this).lockMode) {
             LockMode.ALWAYS -> true
             LockMode.CHARGING -> isCharging()
@@ -218,7 +253,7 @@ class ClockActivity : ComponentActivity(), NotificationHost {
         }
     }
 
-    private fun isCharging() = getSystemService(BatteryManager::class.java)?.isCharging == true
+    private fun isCharging() = Power.charging(this)
 
     /** Con el teléfono en el bolsillo o boca abajo, el sensor de proximidad apaga la pantalla. */
     private fun acquireProximity() {
@@ -326,6 +361,10 @@ class ClockActivity : ComponentActivity(), NotificationHost {
 
     companion object {
         const val EXTRA_FROM_LOCK = "from_lock"
+
+        /** Sin tocarlo y sin cargador: primero baja el brillo y después deja apagar la pantalla. */
+        const val IDLE_DIM_MS = 60_000L
+        const val IDLE_OFF_MS = 10 * 60_000L
 
         /** Para saber si el reloj se estaba viendo cuando se apagó la pantalla. */
         @Volatile
