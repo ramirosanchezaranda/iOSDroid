@@ -30,14 +30,17 @@ Widget para la pantalla de inicio de Android con **hora, fecha y clima**, con es
 - **Reloj en la pantalla bloqueada** (*Mostrar al bloquear el teléfono*): cada vez que se bloquea el teléfono
   (botón o tiempo de espera), el reloj aparece encima de la pantalla de bloqueo. Modos: *Siempre* (la pantalla queda
   encendida; con el sensor de proximidad se apaga en el bolsillo), *Al cargar* y *Normal* (aparece al encender la
-  pantalla). Se cierra solo al desbloquear con huella/cara, o con *Desbloquear*. Funciona con un servicio en primer
+  pantalla). Con el teléfono bloqueado, tocar el reloj (o deslizar hacia arriba) abre al instante el desbloqueo del
+  sistema con la huella activa: Android apaga el lector mientras una app se muestra sobre el bloqueo, así que es
+  "tocar y apoyar el dedo". Se cierra solo al desbloquear. Funciona con un servicio en primer
   plano que escucha el apagado de pantalla y una notificación de pantalla completa (como las alarmas); se reactiva
   solo al reiniciar el teléfono.
 - **Notificaciones en el reloj** (como la pantalla de bloqueo del iPhone): tarjetas abajo del reloj con ícono, título,
   texto y "ahora / hace 5 min", apiladas cuando hay muchas. Tocar abre la app (pide desbloquear si hace falta) y
   deslizar hacia un costado la borra. Con el teléfono bloqueado se respeta el contenido privado de cada app, y se
-  puede ocultar todo el texto. Requiere dar acceso a las notificaciones (si Android dice "Ajuste restringido":
-  Información de la app → ⋮ → Permitir ajustes restringidos).
+  puede ocultar todo el texto. Requiere dar acceso a las notificaciones. Si Android dice "A la app se le negó el
+  acceso" / "Ajuste restringido" (apps instaladas desde un APK): Información de la app → ⋮ → *Permitir ajustes
+  restringidos*, y después volver a dar el acceso. La app muestra estos pasos con botones directos.
 - **Protector de pantalla del sistema** (*Reloj Glass*): se activa solo mientras el teléfono carga. En ColorOS el menú
   está oculto; el botón de la app abre esa pantalla de Ajustes directamente.
 - Para cuidar la pantalla, el contenido se mueve un poco cada minuto (sin animación si está activado "Reducir movimiento").

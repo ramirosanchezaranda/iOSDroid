@@ -570,7 +570,7 @@ class MainActivity : ComponentActivity() {
         show.setOnCheckedChangeListener { view, on ->
             selectionTick(view)
             prefs.clockNotifications = on
-            if (on && !NotificationsHub.accessGranted(this)) openNotificationAccess()
+            if (on && !NotificationsHub.accessGranted(this)) showNotificationGuide()
             renderNotificationState()
         }
         findViewById<View>(R.id.notif_row).setOnClickListener { show.toggle() }
@@ -581,7 +581,7 @@ class MainActivity : ComponentActivity() {
             prefs.hideNotificationText = on
         }
         findViewById<View>(R.id.notif_hide_row).setOnClickListener { hide.toggle() }
-        findViewById<View>(R.id.notif_permission).setOnClickListener { openNotificationAccess() }
+        findViewById<View>(R.id.notif_permission).setOnClickListener { showNotificationGuide() }
         findViewById<View>(R.id.notif_app_info).setOnClickListener {
             runCatching { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) }
         }
@@ -592,6 +592,26 @@ class MainActivity : ComponentActivity() {
         val visibility = if (missing) View.VISIBLE else View.GONE
         listOf(R.id.notif_permission, R.id.notif_permission_sep, R.id.notif_app_info, R.id.notif_app_info_sep)
             .forEach { findViewById<View>(it).visibility = visibility }
+    }
+
+    /**
+     * Android 13+ bloquea el acceso a notificaciones de las apps instaladas desde un APK ("ajustes
+     * restringidos"): se explica cómo habilitarlo antes de abrir Ajustes.
+     */
+    private fun showNotificationGuide() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            openNotificationAccess()
+            return
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.notif_guide_title)
+            .setMessage(R.string.notif_guide_text)
+            .setPositiveButton(R.string.notif_guide_grant) { _, _ -> openNotificationAccess() }
+            .setNeutralButton(R.string.notif_guide_app_info) { _, _ ->
+                runCatching { startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     /** Pantalla de Ajustes para dar acceso a las notificaciones (directo a esta app si se puede). */

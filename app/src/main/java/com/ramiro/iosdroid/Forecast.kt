@@ -18,12 +18,16 @@ import kotlin.math.min
 /** Pronóstico de los próximos días: nombres de los días y barras de temperatura estilo iOS. */
 object Forecast {
 
+    /** "Hoy" según el reloj del teléfono (los tests lo fijan en una fecha). */
+    @Volatile
+    var today: () -> LocalDate = { LocalDate.now() }
+
     /** Días desde hoy en adelante (si los datos son de ayer, se descarta lo viejo). */
-    fun upcoming(days: List<DayForecast>, today: LocalDate = LocalDate.now()): List<DayForecast> =
+    fun upcoming(days: List<DayForecast>, today: LocalDate = this.today()): List<DayForecast> =
         days.filter { runCatching { !LocalDate.parse(it.date).isBefore(today) }.getOrDefault(false) }
 
     /** "Hoy", "Mañana" y después el día de la semana ("Jue" o "Jueves"). */
-    fun dayLabel(context: Context, day: DayForecast, short: Boolean, today: LocalDate = LocalDate.now()): String {
+    fun dayLabel(context: Context, day: DayForecast, short: Boolean, today: LocalDate = this.today()): String {
         val date = runCatching { LocalDate.parse(day.date) }.getOrNull() ?: return day.date
         return when (ChronoUnit.DAYS.between(today, date)) {
             0L -> context.getString(R.string.today)

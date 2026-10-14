@@ -130,6 +130,7 @@
     <string name="saver_note">El modo reloj deja la pantalla siempre encendida mientras está abierto (conviene con el cargador) y se sigue viendo aunque el teléfono se bloquee. Toca una vez y luego «Salir» para cerrarlo.\n\nEl protector de pantalla se activa solo mientras el teléfono carga. En ColorOS esa opción está oculta en Ajustes: el botón la abre directamente, y ahí eliges «Reloj Glass».\n\nPara cuidar la pantalla, el reloj se mueve un poco cada minuto.</string>
     <string name="clock_exit">Salir</string>
     <string name="clock_unlock">Desbloquear</string>
+    <string name="clock_unlock_hint">Toca o desliza hacia arriba para desbloquear</string>
 
     <!-- Notificaciones en el reloj -->
     <string name="section_notifications">Notificaciones en el reloj</string>
@@ -138,6 +139,10 @@
     <string name="notif_permission">Permitir acceso a las notificaciones</string>
     <string name="notif_app_info">Abrir información de la app</string>
     <string name="notif_note">Aparecen abajo del reloj, como en el iPhone: toca una para abrirla (si está bloqueado, te pide desbloquear) y deslízala hacia un costado para borrarla.\n\nHay que darle a iOSDroid acceso a las notificaciones. Si Android dice «Ajuste restringido», abre la información de la app → ⋮ → «Permitir ajustes restringidos» y vuelve a intentarlo.</string>
+    <string name="notif_guide_title">Permitir el acceso a las notificaciones</string>
+    <string name="notif_guide_text">Como instalaste iOSDroid desde un APK, Android bloquea este permiso hasta que lo autorices (por eso dice «A la app se le negó el acceso»):\n\n1. Toca «Información de la app».\n2. Arriba a la derecha, toca ⋮ → «Permitir ajustes restringidos» (o «Permitir configuración restringida») y confirma con tu huella o PIN.\n3. Vuelve acá, toca «Dar acceso» y activa iOSDroid.\n\nSi en ⋮ no aparece la opción, toca primero «Dar acceso» una vez para que Android muestre el aviso, y después repite el paso 1.</string>
+    <string name="notif_guide_grant">Dar acceso</string>
+    <string name="notif_guide_app_info">Información de la app</string>
     <string name="notif_service_label">Notificaciones en el reloj de iOSDroid</string>
     <string name="notif_now">ahora</string>
     <string name="notif_minutes">hace %d min</string>

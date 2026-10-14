@@ -34,7 +34,9 @@ class ClockActivity : ComponentActivity() {
     private var screen: ClockScreen? = null
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var exit: TextView
+    private lateinit var unlockHint: TextView
     private var fromLock = false
+    private var dismissing = false
     private var proximityLock: PowerManager.WakeLock? = null
     private var receiverRegistered = false
 
@@ -74,10 +76,21 @@ class ClockActivity : ComponentActivity() {
 
         val root = findViewById<View>(R.id.clock_root)
         exit = findViewById(R.id.ss_exit)
+        unlockHint = findViewById(R.id.ss_unlock_hint)
         screen = ClockScreen(this, window, root, controlBrightness = true, onOpenNotification = ::openNotification)
-        // Un toque muestra el botón (así un roce no lo cierra).
+        // Bloqueado: con apoyar el dedo se abre el desbloqueo del sistema (con la huella activa),
+        // así se desbloquea "desde el reloj". Desbloqueado: un toque muestra el botón Salir.
+        root.setOnTouchListener { _, event ->
+            if (event.actionMasked == android.view.MotionEvent.ACTION_DOWN && locked()) {
+                leave()
+                true
+            } else {
+                false
+            }
+        }
         root.setOnClickListener { showExit() }
         exit.setOnClickListener { leave() }
+        showUnlockHint()
 
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_USER_PRESENT)
@@ -94,6 +107,7 @@ class ClockActivity : ComponentActivity() {
         fromLock = intent.getBooleanExtra(EXTRA_FROM_LOCK, false)
         applyScreenMode(turnOn = true)
         LockClock.cancelShowNotification(this)
+        showUnlockHint()
     }
 
     override fun onStart() {
@@ -207,12 +221,40 @@ class ClockActivity : ComponentActivity() {
     private fun leave() {
         val keyguard = getSystemService(KeyguardManager::class.java)
         if (keyguard != null && keyguard.isKeyguardLocked) {
+            if (dismissing) return
+            dismissing = true
             keyguard.requestDismissKeyguard(this, object : KeyguardManager.KeyguardDismissCallback() {
-                override fun onDismissSucceeded() = finish()
+                override fun onDismissSucceeded() {
+                    dismissing = false
+                    finish()
+                }
+
+                // Si se cancela (atrás), el reloj sigue en pantalla.
+                override fun onDismissCancelled() {
+                    dismissing = false
+                }
+
+                override fun onDismissError() {
+                    dismissing = false
+                }
             })
         } else {
             finish()
         }
+    }
+
+    /** Aviso discreto abajo: "Toca o desliza hacia arriba para desbloquear" (solo bloqueado). */
+    private fun showUnlockHint() {
+        if (!locked()) {
+            unlockHint.visibility = View.GONE
+            return
+        }
+        unlockHint.animate().cancel()
+        unlockHint.alpha = 1f
+        unlockHint.visibility = View.VISIBLE
+        handler.postDelayed({
+            unlockHint.animate().alpha(0f).withEndAction { unlockHint.visibility = View.GONE }.start()
+        }, 5_000)
     }
 
     private fun hideSystemBars() {

@@ -118,4 +118,19 @@
         android:textColor="#FFFFFFFF"
         android:textSize="15sp"
         android:visibility="gone" />
+
+    <!-- Con el teléfono bloqueado: tocar abre el desbloqueo (huella, cara o PIN). -->
+    <TextView
+        android:id="@+id/ss_unlock_hint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="6dp"
+        android:drawableStart="@drawable/ic_fingerprint"
+        android:drawablePadding="6dp"
+        android:gravity="center_vertical"
+        android:text="@string/clock_unlock_hint"
+        android:textColor="#A6FFFFFF"
+        android:textSize="12sp"
+        android:visibility="gone" />
 </FrameLayout>

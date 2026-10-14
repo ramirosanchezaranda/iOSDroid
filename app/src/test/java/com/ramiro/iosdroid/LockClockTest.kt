@@ -112,6 +112,28 @@ class LockClockTest {
     }
 
     @Test
+    fun touchingTheLockedClockOpensUnlock() {
+        val keyguard = shadowOf(ctx.getSystemService(android.app.KeyguardManager::class.java))
+        keyguard.setKeyguardLocked(true)
+        try {
+            val activity = open().get()
+            val root = activity.findViewById<android.view.View>(R.id.clock_root)
+            assertEquals(android.view.View.VISIBLE, activity.findViewById<android.view.View>(R.id.ss_unlock_hint).visibility)
+            val down = android.view.MotionEvent.obtain(0, 0, android.view.MotionEvent.ACTION_DOWN, 100f, 400f, 0)
+            root.dispatchTouchEvent(down)
+            shadowOf(Looper.getMainLooper()).idle()
+            // Se pidió el desbloqueo: el reloj sigue hasta que el usuario se desbloquea (huella / PIN)...
+            assertFalse(activity.isFinishing)
+            keyguard.setKeyguardLocked(false)
+            shadowOf(Looper.getMainLooper()).idle()
+            // ...y ahí se cierra.
+            assertTrue(activity.isFinishing)
+        } finally {
+            keyguard.setKeyguardLocked(false)
+        }
+    }
+
+    @Test
     fun unlockingClosesTheClock() {
         val controller = open()
         ctx.sendBroadcast(Intent(Intent.ACTION_USER_PRESENT))

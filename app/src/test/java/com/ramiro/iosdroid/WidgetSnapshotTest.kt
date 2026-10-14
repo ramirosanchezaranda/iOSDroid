@@ -58,6 +58,7 @@ class WidgetSnapshotTest {
         // Martes 13 de octubre, 16:26 en Buenos Aires (como la captura del inicio).
         val zone = ZoneId.of("America/Argentina/Buenos_Aires")
         TimeZone.setDefault(TimeZone.getTimeZone(zone))
+        Forecast.today = { java.time.LocalDate.of(2026, 10, 13) }
         SystemClock.setCurrentTimeMillis(ZonedDateTime.of(2026, 10, 13, 16, 26, 0, 0, zone).toInstant().toEpochMilli())
         WorkManagerTestInitHelper.initializeTestWorkManager(ctx)
         Prefs(ctx).apply {
