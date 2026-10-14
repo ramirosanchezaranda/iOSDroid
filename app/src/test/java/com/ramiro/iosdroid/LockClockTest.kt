@@ -79,7 +79,7 @@ class LockClockTest {
 
     @Test
     fun serviceListensForScreenOff() {
-        val service = Robolectric.buildService(LockClockService::class.java).create().get()
+        val service = Robolectric.buildService(ClockService::class.java).create().get()
         assertNotNull(shadowOf(service).lastForegroundNotification)
         // El apagado ocurre bastante después de que se cerró cualquier reloj de otro test.
         shadowOf(Looper.getMainLooper()).idleFor(java.time.Duration.ofSeconds(10))

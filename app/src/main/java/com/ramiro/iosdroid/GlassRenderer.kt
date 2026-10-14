@@ -10,6 +10,7 @@ import android.graphics.Path
 import android.graphics.RadialGradient
 import android.graphics.RectF
 import android.graphics.Shader
+import android.util.LruCache
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
@@ -61,7 +62,16 @@ object GlassRenderer {
         )
     }
 
+    // Con fuente propia el widget se redibuja cada minuto: el vidrio no cambia, se reutiliza.
+    private val cache = object : LruCache<String, Bitmap>(6) {}
+
     fun render(width: Int, height: Int, radius: Float, density: Float, style: GlassStyle): Bitmap {
+        val key = "$width-$height-$radius-$density-$style"
+        cache.get(key)?.let { return it }
+        return draw(width, height, radius, density, style).also { cache.put(key, it) }
+    }
+
+    private fun draw(width: Int, height: Int, radius: Float, density: Float, style: GlassStyle): Bitmap {
         val w = width.coerceAtLeast(8)
         val h = height.coerceAtLeast(8)
         val s = spec(style)

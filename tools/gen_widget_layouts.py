@@ -113,6 +113,30 @@ def column(ind, kids, extra=None, padding=16):
     return el("LinearLayout", d, ind, kids)
 
 
+FONTS = [("thin", "Thin"), ("light", "Light"), ("regular", "Regular"), ("bold", "Bold"), ("heavy", "Heavy"),
+         ("condensed", "Condensed"), ("serif", "Serif"), ("mono", "Mono"), ("script", "Script")]
+
+
+def time_block():
+    """La hora, una vez por fuente del sistema (RemoteViews no deja cambiar la fuente) y una imagen
+    para la fuente propia del usuario, que se dibuja en la app."""
+    clocks = [el("TextClock", {
+        "id": f"@+id/time_{key}", "style": f"@style/WidgetText.Time.{style}", "layout_width": "match_parent",
+        "layout_height": "match_parent", "gravity": "start|center_vertical",
+        "visibility": "visible" if key == "light" else "gone",
+    }, 4) for key, style in FONTS]
+    image = el("ImageView", {
+        "id": "@+id/time_image", "layout_width": "wrap_content", "layout_height": "match_parent",
+        "layout_gravity": "start|center_vertical", "adjustViewBounds": "true", "scaleType": "fitCenter",
+        "visibility": "gone",
+    }, 4)
+    frame = el("FrameLayout", {"id": "@+id/time_box", "layout_width": "match_parent",
+                               "layout_height": "match_parent"}, 0, clocks + [image], first=True)
+    return ('<?xml version="1.0" encoding="utf-8"?>\n'
+            "<!-- La hora del widget. El código deja visible solo la variante elegida. -->\n"
+            "<!-- Generado por tools/gen_widget_layouts.py: no editar a mano. -->\n" + frame + "\n")
+
+
 def small():
     # Temperatura y máx./mín. en una línea, el estado debajo.
     row = el("LinearLayout", {"id": "@+id/weather", "layout_width": "match_parent", "layout_height": "wrap_content",
@@ -183,7 +207,7 @@ def xl():
 
 if __name__ == "__main__":
     out = sys.argv[1]
-    for name, fn in [("widget_small", small), ("widget_medium", medium), ("widget_large", large),
+    for name, fn in [("widget_time", time_block), ("widget_small", small), ("widget_medium", medium), ("widget_large", large),
                      ("widget_wide", wide), ("widget_xl", xl)]:
         with open(os.path.join(out, name + ".xml"), "w") as f:
             f.write(fn())

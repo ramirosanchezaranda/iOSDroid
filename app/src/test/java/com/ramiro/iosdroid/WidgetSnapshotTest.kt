@@ -164,6 +164,24 @@ class WidgetSnapshotTest {
     }
 
     @Test
+    fun renderCustomFontWidget() {
+        val font = java.io.File(ctx.cacheDir, "Caladea-Regular.ttf")
+        javaClass.classLoader!!.getResourceAsStream("testfonts/Caladea-Regular.ttf")!!.use { input ->
+            font.outputStream().use { input.copyTo(it) }
+        }
+        CustomFont.import(ctx, android.net.Uri.fromFile(font))
+        Prefs(ctx).useCustomFont = true
+        try {
+            save(draw(222f, 181f, wallpaper = true), "custom_font_medium.png")
+            save(draw(222f, 273f, wallpaper = true), "custom_font_large.png")
+            save(draw(144f, 181f, wallpaper = true), "custom_font_small.png")
+        } finally {
+            CustomFont.remove(ctx)
+            Prefs(ctx).useCustomFont = false
+        }
+    }
+
+    @Test
     fun renderClockScreens() {
         for (bg in SaverBackground.entries) {
             Prefs(ctx).saverBackground = bg
@@ -200,6 +218,33 @@ class WidgetSnapshotTest {
         }
         root.draw(Canvas(bmp))
         return bmp
+    }
+
+    @Test
+    fun renderSettingsWithCustomFont() {
+        val font = java.io.File(ctx.cacheDir, "Caladea-Regular.ttf")
+        javaClass.classLoader!!.getResourceAsStream("testfonts/Caladea-Regular.ttf")!!.use { input ->
+            font.outputStream().use { input.copyTo(it) }
+        }
+        CustomFont.import(ctx, android.net.Uri.fromFile(font))
+        Prefs(ctx).apply { useCustomFont = true; customFontName = "Caladea-Regular" }
+        try {
+            val activity = Robolectric.buildActivity(MainActivity::class.java).setup().get()
+            val root = activity.window.decorView
+            val w = (400 * density).roundToInt()
+            val h = (1900 * density).roundToInt()
+            repeat(2) {
+                root.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(h, View.MeasureSpec.EXACTLY))
+                root.layout(0, 0, w, h)
+                shadowOf(Looper.getMainLooper()).idle()
+            }
+            val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+            root.draw(Canvas(bmp))
+            save(bmp, "settings_custom_font.png")
+        } finally {
+            CustomFont.remove(ctx)
+            Prefs(ctx).useCustomFont = false
+        }
     }
 
     @Test

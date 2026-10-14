@@ -69,14 +69,14 @@
             android:excludeFromRecents="true"
             android:theme="@style/Theme.IOSDroid.Clock" />
 
-        <!-- Escucha el apagado de pantalla para mostrar el reloj al bloquear. -->
+        <!-- Escucha el apagado de pantalla (reloj al bloquear) y los minutos (hora del widget con fuente propia). -->
         <service
-            android:name=".LockClockService"
+            android:name=".ClockService"
             android:exported="false"
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Muestra un reloj sobre la pantalla de bloqueo cada vez que se bloquea el teléfono" />
+                android:value="Muestra un reloj sobre la pantalla de bloqueo al bloquear el teléfono y actualiza cada minuto la hora del widget dibujada con la fuente del usuario" />
         </service>
 
         <receiver

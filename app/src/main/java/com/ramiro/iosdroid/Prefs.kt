@@ -78,6 +78,19 @@ class Prefs(context: Context) {
         get() = sp.getBoolean("saver_dim", false)
         set(v) = sp.edit().putBoolean("saver_dim", v).apply()
 
+    /** Usar la fuente cargada por el usuario en lugar de [clockFont]. */
+    var useCustomFont: Boolean
+        get() = sp.getBoolean("custom_font", false)
+        set(v) = sp.edit().putBoolean("custom_font", v).apply()
+
+    var customFontName: String
+        get() = sp.getString("custom_font_name", null) ?: ""
+        set(v) = sp.edit().putString("custom_font_name", v).apply()
+
+    var customFontWeight: Int
+        get() = sp.getInt("custom_font_weight", 400)
+        set(v) = sp.edit().putInt("custom_font_weight", v).apply()
+
     /** Mostrar el reloj cada vez que se bloquea el teléfono. */
     var lockClock: Boolean
         get() = sp.getBoolean("lock_clock", false)

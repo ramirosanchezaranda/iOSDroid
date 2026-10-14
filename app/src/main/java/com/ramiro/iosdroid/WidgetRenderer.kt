@@ -8,6 +8,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Build
 import android.os.Bundle
 import android.provider.AlarmClock
@@ -84,12 +85,15 @@ object WidgetRenderer {
         val font: ClockFont,
         val place: Place?,
         val weather: Weather?,
+        /** Fuente cargada por el usuario: la hora se dibuja como imagen. */
+        val customFont: Typeface? = null,
     )
 
     fun loadState(context: Context): State {
         val prefs = Prefs(context)
         return State(
             prefs.style, resolveTone(context, prefs.style, prefs.textTone), prefs.clockFont, prefs.place, prefs.weather,
+            CustomFont.active(context),
         )
     }
 
@@ -139,9 +143,23 @@ object WidgetRenderer {
         val primary = if (state.tone == TextTone.DARK) Color.rgb(28, 28, 30) else Color.WHITE
         val secondary = ColorUtils.setAlphaComponent(primary, if (state.tone == TextTone.DARK) 0xCC else 0xD9)
         val tertiary = ColorUtils.setAlphaComponent(primary, if (state.tone == TextTone.DARK) 0x99 else 0xA6)
-        // Hora: solo queda visible el TextClock con la fuente elegida.
+        // Hora: solo queda visible el TextClock con la fuente elegida, o la imagen con la fuente propia.
         val timeId = state.font.timeId
-        ClockFont.entries.forEach { rv.setViewVisibility(it.timeId, if (it == state.font) View.VISIBLE else View.GONE) }
+        val custom = state.customFont
+        ClockFont.entries.forEach {
+            rv.setViewVisibility(it.timeId, if (custom == null && it == state.font) View.VISIBLE else View.GONE)
+        }
+        if (custom != null) {
+            val now = currentTime(context)
+            val bitmap = CustomFont.timeBitmap(
+                now, custom, primary, shadow = state.tone == TextTone.LIGHT, heightPx = (64 * density).roundToInt(),
+            )
+            rv.setImageViewBitmap(R.id.time_image, bitmap)
+            rv.setContentDescription(R.id.time_image, now)
+            rv.setViewVisibility(R.id.time_image, View.VISIBLE)
+        } else {
+            rv.setViewVisibility(R.id.time_image, View.GONE)
+        }
         rv.setTextColor(timeId, primary)
         rv.setTextColor(R.id.temp, primary)
         rv.setTextColor(R.id.date, secondary)
@@ -249,6 +267,9 @@ object WidgetRenderer {
     }
 
     fun deg(value: Double) = "${value.roundToInt()}°"
+
+    fun currentTime(context: Context): String =
+        DateFormat.format(if (DateFormat.is24HourFormat(context)) "HH:mm" else "h:mm", System.currentTimeMillis()).toString()
 
     /** En automático, usa texto oscuro solo si el fondo de pantalla es claro. */
     fun resolveTone(context: Context, style: GlassStyle, tone: TextTone): TextTone {

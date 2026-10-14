@@ -118,8 +118,9 @@ class ClockScreen(
 
     fun bind() {
         val font = prefs.clockFont
-        time.typeface = font.typeface()
-        time.letterSpacing = font.letterSpacing
+        val custom = CustomFont.active(context)
+        time.typeface = custom ?: font.typeface()
+        time.letterSpacing = if (custom != null) -0.01f else font.letterSpacing
         fitTime(force = true)
 
         // Fondo: negro puro (ideal OLED) o tarjeta de vidrio sobre tu fondo de pantalla.

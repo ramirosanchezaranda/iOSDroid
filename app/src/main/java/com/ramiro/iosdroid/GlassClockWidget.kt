@@ -13,6 +13,7 @@ class GlassClockWidget : AppWidgetProvider() {
         ids.forEach { WidgetRenderer.update(context, manager, it, state) }
         WeatherWorker.schedule(context)
         WeatherWorker.refreshIfStale(context)
+        ClockService.sync(context)
     }
 
     override fun onAppWidgetOptionsChanged(context: Context, manager: AppWidgetManager, id: Int, options: Bundle) {
@@ -23,10 +24,12 @@ class GlassClockWidget : AppWidgetProvider() {
     override fun onEnabled(context: Context) {
         WeatherWorker.schedule(context)
         WeatherWorker.refreshIfStale(context)
+        ClockService.sync(context)
     }
 
     override fun onDisabled(context: Context) {
         WeatherWorker.cancel(context)
+        ClockService.sync(context)
     }
 
     override fun onReceive(context: Context, intent: Intent) {

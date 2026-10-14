@@ -87,7 +87,14 @@
     <string name="status_updated">Clima actualizado a las %1$s · %2$s</string>
     <!-- Fuente de la hora -->
     <string name="section_font">Fuente de la hora</string>
-    <string name="font_note">Usa la fuente del sistema (OPPO Sans en tu teléfono) en distintos pesos, y otras fuentes del sistema. Android no permite fuentes propias dentro de los widgets.</string>
+    <string name="font_note">Usa la fuente del sistema (OPPO Sans en tu teléfono) o carga tu propia fuente .ttf u .otf con «+», por ejemplo SF Pro. Con una fuente propia, la hora del widget se dibuja como imagen y se actualiza cada minuto con la pantalla encendida. El peso funciona con fuentes variables. Mantén presionada tu fuente para quitarla.</string>
+    <string name="font_add">Cargar</string>
+    <string name="font_custom_default_name">Mi fuente</string>
+    <string name="font_invalid">Ese archivo no es una fuente .ttf u .otf válida.</string>
+    <string name="font_loaded">Fuente cargada: %1$s</string>
+    <string name="font_remove_title">¿Quitar «%1$s»?</string>
+    <string name="font_remove">Quitar</string>
+    <string name="font_weight">Peso de tu fuente</string>
     <string name="font_thin">Fina</string>
     <string name="font_light">Ligera</string>
     <string name="font_regular">Normal</string>
@@ -121,11 +128,12 @@
     <string name="lock_permission">Permitir sobre la pantalla bloqueada</string>
     <string name="lock_notifications">Permitir notificaciones</string>
     <string name="lock_note">Cada vez que bloqueas el teléfono aparece el reloj encima de la pantalla de bloqueo.\n\n• Siempre: la pantalla queda prendida con el reloj. Si lo guardas en el bolsillo o lo pones boca abajo, el sensor de proximidad la apaga.\n• Al cargar: queda prendida solo mientras está enchufado.\n• Normal: el reloj aparece al encender la pantalla y se apaga sola.\n\nPara volver al teléfono, desbloquea con huella o cara, o toca la pantalla → «Desbloquear». Si apagas la pantalla con el botón mientras ves el reloj, se apaga de verdad.\n\nEn ColorOS, para que no se detenga: Ajustes → Batería → iOSDroid → permitir actividad en segundo plano.</string>
-    <string name="lock_channel_service">Reloj en pantalla bloqueada (activo)</string>
+    <string name="lock_channel_service">Reloj Glass en segundo plano</string>
     <string name="lock_channel_show">Mostrar el reloj al bloquear</string>
-    <string name="lock_service_title">Reloj en pantalla bloqueada</string>
+    <string name="lock_service_title">Reloj Glass</string>
     <string name="lock_service_text">El reloj aparece cada vez que bloqueas el teléfono</string>
     <string name="lock_show_text">Toca para ver el reloj</string>
+    <string name="font_service_text">Mantiene al día la hora del widget con tu fuente</string>
     <string name="clock_mode">Modo reloj</string>
     <string name="clock_mode_long">Abrir modo reloj</string>
     <string name="dream_name">Reloj Glass</string>

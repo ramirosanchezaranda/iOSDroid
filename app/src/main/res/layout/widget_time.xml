@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- La hora del widget, una vez por fuente. El código deja visible solo la elegida
-     (RemoteViews no permite cambiar la fuente en tiempo de ejecución). -->
+<!-- La hora del widget. El código deja visible solo la variante elegida. -->
+<!-- Generado por tools/gen_widget_layouts.py: no editar a mano. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/time_box"
     android:layout_width="match_parent"
@@ -76,5 +76,14 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="start|center_vertical"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/time_image"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start|center_vertical"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
         android:visibility="gone" />
 </FrameLayout>

@@ -5,6 +5,8 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -12,6 +14,7 @@ import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import android.os.PowerManager
 import android.os.SystemClock
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -98,25 +101,24 @@ object LockClock {
             },
         )
     }
-
-    /** Arranca o detiene el servicio según la preferencia. */
-    fun sync(context: Context) {
-        if (Prefs(context).lockClock) {
-            runCatching {
-                ContextCompat.startForegroundService(context, Intent(context, LockClockService::class.java))
-            }
-        } else {
-            context.stopService(Intent(context, LockClockService::class.java))
-        }
-    }
 }
 
-/** Servicio en primer plano que escucha el apagado de pantalla (solo se puede escuchar mientras corre). */
-class LockClockService : Service() {
+/**
+ * Servicio en primer plano (con su notificación fija) para lo que necesita escuchar eventos del
+ * sistema mientras la app no está abierta:
+ * - el apagado de pantalla, para mostrar el reloj al bloquear ([LockClock]);
+ * - el paso de los minutos, para redibujar la hora del widget cuando usa una fuente propia.
+ * Solo corre si alguna de las dos cosas está activa.
+ */
+class ClockService : Service() {
 
-    private val screenOff = object : BroadcastReceiver() {
+    private val events = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            if (intent.action == Intent.ACTION_SCREEN_OFF) LockClock.onScreenOff(context)
+            when (intent.action) {
+                Intent.ACTION_SCREEN_OFF -> LockClock.onScreenOff(context)
+                Intent.ACTION_TIME_TICK, Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED -> refreshWidgetTime(context, onlyIfScreenOn = true)
+                Intent.ACTION_SCREEN_ON -> refreshWidgetTime(context, onlyIfScreenOn = false)
+            }
         }
     }
     private var registered = false
@@ -124,48 +126,92 @@ class LockClockService : Service() {
     override fun onCreate() {
         super.onCreate()
         LockClock.createChannels(this)
-        val open = PendingIntent.getActivity(
-            this, 11, Intent(this, MainActivity::class.java),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-        )
-        val notification = NotificationCompat.Builder(this, LockClock.CHANNEL_SERVICE)
-            .setSmallIcon(R.drawable.ic_stat_clock)
-            .setContentTitle(getString(R.string.lock_service_title))
-            .setContentText(getString(R.string.lock_service_text))
-            .setPriority(NotificationCompat.PRIORITY_MIN)
-            .setOngoing(true)
-            .setContentIntent(open)
-            .build()
         val type = if (Build.VERSION.SDK_INT >= 34) ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE else 0
-        ServiceCompat.startForeground(this, LockClock.ID_SERVICE, notification, type)
-        ContextCompat.registerReceiver(
-            this, screenOff, IntentFilter(Intent.ACTION_SCREEN_OFF), ContextCompat.RECEIVER_NOT_EXPORTED,
-        )
+        ServiceCompat.startForeground(this, LockClock.ID_SERVICE, notification(), type)
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_OFF)
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_TIME_TICK)
+            addAction(Intent.ACTION_TIME_CHANGED)
+            addAction(Intent.ACTION_TIMEZONE_CHANGED)
+        }
+        ContextCompat.registerReceiver(this, events, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
         registered = true
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (!Prefs(this).lockClock) {
+        if (!needed(this)) {
             stopSelf()
             return START_NOT_STICKY
         }
+        // El texto de la notificación depende de qué está activo.
+        NotificationManagerCompat.from(this).let { nm ->
+            if (nm.areNotificationsEnabled()) runCatching { nm.notify(LockClock.ID_SERVICE, notification()) }
+        }
+        refreshWidgetTime(this, onlyIfScreenOn = false)
         return START_STICKY
     }
 
     override fun onDestroy() {
-        if (registered) unregisterReceiver(screenOff)
+        if (registered) unregisterReceiver(events)
         registered = false
         super.onDestroy()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    private fun notification(): Notification {
+        val prefs = Prefs(this)
+        val open = PendingIntent.getActivity(
+            this, 11, Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val text = if (prefs.lockClock) R.string.lock_service_text else R.string.font_service_text
+        return NotificationCompat.Builder(this, LockClock.CHANNEL_SERVICE)
+            .setSmallIcon(R.drawable.ic_stat_clock)
+            .setContentTitle(getString(R.string.lock_service_title))
+            .setContentText(getString(text))
+            .setPriority(NotificationCompat.PRIORITY_MIN)
+            .setOngoing(true)
+            .setContentIntent(open)
+            .build()
+    }
+
+    companion object {
+        /** Hace falta el servicio si el reloj al bloquear está activo o algún widget usa fuente propia. */
+        fun needed(context: Context): Boolean {
+            val prefs = Prefs(context)
+            return prefs.lockClock || (prefs.useCustomFont && CustomFont.exists(context) && widgetCount(context) > 0)
+        }
+
+        /** Arranca o detiene el servicio según las preferencias. */
+        fun sync(context: Context) {
+            if (needed(context)) {
+                runCatching { ContextCompat.startForegroundService(context, Intent(context, ClockService::class.java)) }
+            } else {
+                context.stopService(Intent(context, ClockService::class.java))
+            }
+        }
+
+        private fun widgetCount(context: Context) = runCatching {
+            AppWidgetManager.getInstance(context)
+                .getAppWidgetIds(ComponentName(context, GlassClockWidget::class.java)).size
+        }.getOrDefault(0)
+
+        /** Con fuente propia, la hora del widget es una imagen: se redibuja cada minuto con la pantalla encendida. */
+        fun refreshWidgetTime(context: Context, onlyIfScreenOn: Boolean) {
+            if (!Prefs(context).useCustomFont || !CustomFont.exists(context)) return
+            if (onlyIfScreenOn && context.getSystemService(PowerManager::class.java)?.isInteractive == false) return
+            WidgetRenderer.updateAll(context)
+        }
+    }
 }
 
-/** Vuelve a activar el reloj en la pantalla bloqueada después de reiniciar o actualizar la app. */
+/** Vuelve a arrancar el servicio después de reiniciar el teléfono o actualizar la app. */
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
-            Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED -> LockClock.sync(context)
+            Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED -> ClockService.sync(context)
         }
     }
 }

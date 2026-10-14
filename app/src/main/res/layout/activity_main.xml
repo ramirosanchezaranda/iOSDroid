@@ -134,6 +134,15 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal" />
             </HorizontalScrollView>
+
+            <View
+                android:id="@+id/font_weight_sep"
+                style="@style/Separator" />
+
+            <LinearLayout
+                android:id="@+id/seg_font_weight"
+                style="@style/Segmented"
+                android:contentDescription="@string/font_weight" />
         </LinearLayout>
 
         <TextView
