@@ -121,6 +121,11 @@ class ClockScreen(
         val custom = CustomFont.active(context)
         time.typeface = custom ?: font.typeface()
         time.letterSpacing = if (custom != null) -0.01f else font.letterSpacing
+        // La fecha con la misma fuente (si está activado "Usar también en la fecha").
+        date.typeface = when {
+            !prefs.fontForDate -> ClockFont.LIGHT.dateTypeface()
+            else -> CustomFont.activeForDate(context) ?: font.dateTypeface()
+        }
         fitTime(force = true)
 
         // Fondo: negro puro (ideal OLED) o tarjeta de vidrio sobre tu fondo de pantalla.

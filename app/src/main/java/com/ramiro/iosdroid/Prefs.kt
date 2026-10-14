@@ -87,6 +87,11 @@ class Prefs(context: Context) {
         get() = sp.getString("custom_font_name", null) ?: ""
         set(v) = sp.edit().putString("custom_font_name", v).apply()
 
+    /** Usar la fuente elegida también para la fecha. */
+    var fontForDate: Boolean
+        get() = sp.getBoolean("font_for_date", true)
+        set(v) = sp.edit().putBoolean("font_for_date", v).apply()
+
     var customFontWeight: Int
         get() = sp.getInt("custom_font_weight", 400)
         set(v) = sp.edit().putInt("custom_font_weight", v).apply()

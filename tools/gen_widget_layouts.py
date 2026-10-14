@@ -40,12 +40,25 @@ def root(comment, content, indent=0):
     return f'<?xml version="1.0" encoding="utf-8"?>\n<!-- {comment} -->\n<!-- Generado por tools/gen_widget_layouts.py: no editar a mano. -->\n{frame}\n'
 
 
+DATE_FAMILIES = [("date", "WidgetText.Date"), ("date_condensed", "WidgetText.Date.Condensed"),
+                 ("date_serif", "WidgetText.Date.Serif"), ("date_mono", "WidgetText.Date.Mono"),
+                 ("date_script", "WidgetText.Date.Script")]
+
+
 def date(ind, size, width="match_parent", weight=None):
-    d = {"id": "@+id/date", "style": "@style/WidgetText.Date", "layout_width": width,
-         "layout_height": "wrap_content", "textSize": f"{size}sp"}
+    """La fecha, una vez por familia de fuente (como la hora) más una imagen para la fuente propia.
+    La imagen mide lo mismo que una línea de texto y se alinea a la izquierda."""
+    clocks = [el("TextClock", {"id": f"@+id/{vid}", "style": f"@style/{style}", "layout_width": "match_parent",
+                               "layout_height": "wrap_content", "textSize": f"{size}sp",
+                               "visibility": "visible" if vid == "date" else "gone"}, ind + 4)
+              for vid, style in DATE_FAMILIES]
+    image = el("ImageView", {"id": "@+id/date_image", "layout_width": "match_parent",
+                             "layout_height": f"{round(size * 1.35)}dp", "scaleType": "fitStart",
+                             "visibility": "gone"}, ind + 4)
+    d = {"id": "@+id/date_box", "layout_width": width, "layout_height": "wrap_content"}
     if weight:
         d["layout_weight"] = weight
-    return el("TextClock", d, ind)
+    return el("FrameLayout", d, ind, clocks + [image])
 
 
 def time(ind):

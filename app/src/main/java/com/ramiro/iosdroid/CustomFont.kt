@@ -24,8 +24,11 @@ object CustomFont {
     /** Pesos para fuentes variables (eje 'wght'); en fuentes de un solo peso no cambian nada. */
     val WEIGHTS = intArrayOf(200, 300, 400, 700)
 
-    @Volatile
-    private var cache: Pair<String, Typeface>? = null
+    /** Peso de la fecha con fuentes variables (medio, como la jerarquía de iOS). */
+    const val DATE_WEIGHT = 500
+
+    // Hora y fecha usan pesos distintos: se guardan las dos.
+    private val cache = object : android.util.LruCache<String, Typeface>(4) {}
 
     fun file(context: Context) = File(File(context.filesDir, "fonts"), "custom_font")
 
@@ -41,10 +44,10 @@ object CustomFont {
         val f = file(context)
         if (!f.isFile) return null
         val key = "${f.lastModified()}-${f.length()}-$weight"
-        cache?.takeIf { it.first == key }?.let { return it.second }
+        cache.get(key)?.let { return it }
         val tf = runCatching { Typeface.Builder(f).setFontVariationSettings("'wght' $weight").build() }.getOrNull()
             ?: return null
-        cache = key to tf
+        cache.put(key, tf)
         return tf
     }
 
@@ -71,13 +74,40 @@ object CustomFont {
             tmp.copyTo(target, overwrite = true)
             tmp.delete()
         }
-        cache = null
+        cache.evictAll()
         return ImportResult.Ok(displayName(context, uri) ?: "Fuente propia")
     }
 
     fun remove(context: Context) {
         file(context).delete()
-        cache = null
+        cache.evictAll()
+    }
+
+    /** La fuente propia para la fecha, si está elegida y se usa también en la fecha. */
+    fun activeForDate(context: Context): Typeface? {
+        val prefs = Prefs(context)
+        return if (prefs.useCustomFont && prefs.fontForDate) typeface(context, DATE_WEIGHT) else null
+    }
+
+    /**
+     * Una línea de texto (la fecha) dibujada con la fuente propia, a la altura de una línea de
+     * [heightPx]; el widget la muestra alineada a la izquierda.
+     */
+    fun lineBitmap(text: String, typeface: Typeface, color: Int, shadow: Boolean, heightPx: Int): Bitmap {
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.SUBPIXEL_TEXT_FLAG).apply {
+            this.typeface = typeface
+            this.color = color
+            textSize = heightPx / 1.35f
+            if (shadow) setShadowLayer(heightPx * 0.12f, 0f, heightPx * 0.03f, 0x40000000)
+        }
+        val fm = paint.fontMetrics
+        // Sin margen a la izquierda (alineada con el resto del texto); a la derecha, lugar para la sombra.
+        val width = paint.measureText(text).toInt() + (heightPx * 0.15f).toInt() + 2
+        val bmp = Bitmap.createBitmap(width.coerceAtLeast(1), heightPx.coerceAtLeast(1), Bitmap.Config.ARGB_8888)
+        // Centrado vertical según la caja real de la fuente (ascendentes y descendentes).
+        val baseline = (heightPx - (fm.descent - fm.ascent)) / 2f - fm.ascent
+        Canvas(bmp).drawText(text, 1f, baseline, paint)
+        return bmp
     }
 
     /** Cabecera de TrueType, OpenType o colección de fuentes. */

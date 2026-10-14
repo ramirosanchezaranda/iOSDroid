@@ -75,6 +75,21 @@ class CustomFontTest {
         assertNotNull(image.drawable)
         assertEquals(WidgetRenderer.currentTime(ctx), image.contentDescription)
         ClockFont.entries.forEach { assertEquals(it.name, View.GONE, view.findViewById<View>(it.timeId).visibility) }
+        // La fecha también se dibuja con la fuente propia.
+        val date = view.findViewById<ImageView>(R.id.date_image)
+        assertEquals(View.VISIBLE, date.visibility)
+        assertNotNull(date.drawable)
+        ClockFont.DATE_IDS.forEach { assertEquals(View.GONE, view.findViewById<View>(it).visibility) }
+    }
+
+    @Test
+    fun dateCanKeepTheNormalFont() {
+        CustomFont.import(ctx, Uri.fromFile(testFont()))
+        Prefs(ctx).apply { useCustomFont = true; fontForDate = false }
+        val view = WidgetRenderer.build(ctx, 222f, 181f).apply(ctx, FrameLayout(ctx))
+        assertEquals(View.GONE, view.findViewById<View>(R.id.date_image).visibility)
+        assertEquals(View.VISIBLE, view.findViewById<View>(R.id.date).visibility)
+        Prefs(ctx).fontForDate = true
     }
 
     @Test

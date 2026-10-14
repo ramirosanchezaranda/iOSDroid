@@ -87,7 +87,7 @@
     <string name="status_updated">Clima actualizado a las %1$s · %2$s</string>
     <!-- Fuente de la hora -->
     <string name="section_font">Fuente de la hora</string>
-    <string name="font_note">Usa la fuente del sistema (OPPO Sans en tu teléfono) o carga tu propia fuente .ttf u .otf con «+», por ejemplo SF Pro. Con una fuente propia, la hora del widget se dibuja como imagen y se actualiza cada minuto con la pantalla encendida. El peso funciona con fuentes variables. Mantén presionada tu fuente para quitarla.</string>
+    <string name="font_note">Usa la fuente del sistema (OPPO Sans en tu teléfono) o carga tu propia fuente .ttf u .otf con «+», por ejemplo SF Pro. Con una fuente propia, la hora del widget se dibuja como imagen y se actualiza cada minuto con la pantalla encendida. El peso funciona con fuentes variables. Mantén presionada tu fuente para quitarla. La fecha usa la misma fuente en peso medio.</string>
     <string name="font_add">Cargar</string>
     <string name="font_custom_default_name">Mi fuente</string>
     <string name="font_invalid">Ese archivo no es una fuente .ttf u .otf válida.</string>
@@ -95,6 +95,7 @@
     <string name="font_remove_title">¿Quitar «%1$s»?</string>
     <string name="font_remove">Quitar</string>
     <string name="font_weight">Peso de tu fuente</string>
+    <string name="font_for_date">Usar también en la fecha</string>
     <string name="font_thin">Fina</string>
     <string name="font_light">Ligera</string>
     <string name="font_regular">Normal</string>

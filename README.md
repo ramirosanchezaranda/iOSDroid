@@ -14,6 +14,8 @@ Widget para la pantalla de inicio de Android con **hora, fecha y clima**, con es
 - **Fuente propia**: con «+ Cargar» se elige un archivo .ttf u .otf (por ejemplo SF Pro). Se usa en el modo reloj, la
   pantalla bloqueada y el widget; en el widget la hora se dibuja como imagen y se actualiza cada minuto con la pantalla
   encendida (lo hace el servicio en segundo plano). Con fuentes variables se puede elegir el peso.
+- **Fecha con la misma fuente** (*Usar también en la fecha*, activado por defecto): la fecha toma la familia de la hora
+  (Serif, Condensada, Mono, Manuscrita o tu fuente propia) en peso medio.
 - Toques: hora → alarmas, fecha → calendario, clima → ajustes.
 
 ## Modo reloj y protector de pantalla

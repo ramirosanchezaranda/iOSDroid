@@ -36,12 +36,14 @@ object WidgetRenderer {
         val forecastRows: Int,
         val barWidthDp: Int,
         val shortDayNames: Boolean,
+        /** Tamaño del texto de la fecha (igual que en tools/gen_widget_layouts.py). */
+        val dateSp: Int,
     ) {
-        SMALL(R.layout.widget_small, true, false, false, 0, 0, true),
-        MEDIUM(R.layout.widget_medium, true, false, false, 0, 0, true),
-        LARGE(R.layout.widget_large, false, false, true, 4, 40, true),
-        WIDE(R.layout.widget_wide, false, false, false, 4, 30, true),
-        XL(R.layout.widget_xl, true, true, true, 5, 100, false),
+        SMALL(R.layout.widget_small, true, false, false, 0, 0, true, 13),
+        MEDIUM(R.layout.widget_medium, true, false, false, 0, 0, true, 14),
+        LARGE(R.layout.widget_large, false, false, true, 4, 40, true, 15),
+        WIDE(R.layout.widget_wide, false, false, false, 4, 30, true, 14),
+        XL(R.layout.widget_xl, true, true, true, 5, 100, false, 15),
     }
 
     private class RowIds(val row: Int, val day: Int, val icon: Int, val min: Int, val bar: Int, val max: Int)
@@ -87,13 +89,17 @@ object WidgetRenderer {
         val weather: Weather?,
         /** Fuente cargada por el usuario: la hora se dibuja como imagen. */
         val customFont: Typeface? = null,
+        /** La fecha usa la familia de la fuente elegida. */
+        val fontForDate: Boolean = true,
+        /** Fuente propia para la fecha (se dibuja como imagen). */
+        val customDateFont: Typeface? = null,
     )
 
     fun loadState(context: Context): State {
         val prefs = Prefs(context)
         return State(
             prefs.style, resolveTone(context, prefs.style, prefs.textTone), prefs.clockFont, prefs.place, prefs.weather,
-            CustomFont.active(context),
+            CustomFont.active(context), prefs.fontForDate, CustomFont.activeForDate(context),
         )
     }
 
@@ -162,7 +168,14 @@ object WidgetRenderer {
         }
         rv.setTextColor(timeId, primary)
         rv.setTextColor(R.id.temp, primary)
-        rv.setTextColor(R.id.date, secondary)
+
+        // Fecha: con la misma familia que la hora, o dibujada con la fuente propia.
+        val dateId = if (state.fontForDate) state.font.dateId else R.id.date
+        val customDate = state.customDateFont
+        ClockFont.DATE_IDS.forEach {
+            rv.setViewVisibility(it, if (customDate == null && it == dateId) View.VISIBLE else View.GONE)
+        }
+        rv.setTextColor(dateId, secondary)
         rv.setTextColor(R.id.condition, secondary)
         rv.setTextColor(R.id.hilo, tertiary)
         rv.setInt(R.id.wx_icon, "setColorFilter", primary)
@@ -170,8 +183,20 @@ object WidgetRenderer {
         // Fecha en el idioma del teléfono: "martes, 13 de octubre" / "mar 13".
         val skeleton = if (variant == Variant.SMALL) "EEEd" else "EEEEdMMMM"
         val pattern = DateFormat.getBestDateTimePattern(Locale.getDefault(), skeleton)
-        rv.setCharSequence(R.id.date, "setFormat12Hour", pattern)
-        rv.setCharSequence(R.id.date, "setFormat24Hour", pattern)
+        rv.setCharSequence(dateId, "setFormat12Hour", pattern)
+        rv.setCharSequence(dateId, "setFormat24Hour", pattern)
+        if (customDate != null) {
+            val text = DateFormat.format(pattern, System.currentTimeMillis()).toString()
+            val bitmap = CustomFont.lineBitmap(
+                text, customDate, secondary, shadow = state.tone == TextTone.LIGHT,
+                heightPx = (Math.round(variant.dateSp * 1.35f) * density).roundToInt(),
+            )
+            rv.setImageViewBitmap(R.id.date_image, bitmap)
+            rv.setContentDescription(R.id.date_image, text)
+            rv.setViewVisibility(R.id.date_image, View.VISIBLE)
+        } else {
+            rv.setViewVisibility(R.id.date_image, View.GONE)
+        }
         rv.setCharSequence(timeId, "setFormat12Hour", "h:mm")
         rv.setCharSequence(timeId, "setFormat24Hour", "HH:mm")
 
@@ -262,7 +287,7 @@ object WidgetRenderer {
         rv.setOnClickPendingIntent(android.R.id.background, app)
         rv.setOnClickPendingIntent(R.id.weather, app)
         rv.setOnClickPendingIntent(R.id.time_box, clockIntent(context) ?: app)
-        rv.setOnClickPendingIntent(R.id.date, calendarIntent(context) ?: app)
+        rv.setOnClickPendingIntent(R.id.date_box, calendarIntent(context) ?: app)
         return rv
     }
 

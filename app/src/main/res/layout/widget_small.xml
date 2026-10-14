@@ -22,12 +22,58 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <TextClock
-            android:id="@+id/date"
-            style="@style/WidgetText.Date"
+        <FrameLayout
+            android:id="@+id/date_box"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="13sp" />
+            android:layout_height="wrap_content">
+
+            <TextClock
+                android:id="@+id/date"
+                style="@style/WidgetText.Date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:visibility="visible" />
+
+            <TextClock
+                android:id="@+id/date_condensed"
+                style="@style/WidgetText.Date.Condensed"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:visibility="gone" />
+
+            <TextClock
+                android:id="@+id/date_serif"
+                style="@style/WidgetText.Date.Serif"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:visibility="gone" />
+
+            <TextClock
+                android:id="@+id/date_mono"
+                style="@style/WidgetText.Date.Mono"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:visibility="gone" />
+
+            <TextClock
+                android:id="@+id/date_script"
+                style="@style/WidgetText.Date.Script"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:visibility="gone" />
+
+            <ImageView
+                android:id="@+id/date_image"
+                android:layout_width="match_parent"
+                android:layout_height="18dp"
+                android:scaleType="fitStart"
+                android:visibility="gone" />
+        </FrameLayout>
 
         <include
             layout="@layout/widget_time"

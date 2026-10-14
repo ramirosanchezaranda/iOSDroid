@@ -143,6 +143,7 @@ class MainActivity : ComponentActivity() {
             WeatherWorker.refreshNow(this)
         }
         setupFonts()
+        setupFontForDate()
         setupLock()
         setupClockMode()
 
@@ -404,6 +405,17 @@ class MainActivity : ComponentActivity() {
             val selected = row.getChildAt(selectedIndex) ?: return@post
             scroll.scrollTo(max(0, selected.left - dp(12f)), 0)
         }
+    }
+
+    private fun setupFontForDate() {
+        val switch = findViewById<Switch>(R.id.font_date_switch)
+        switch.isChecked = prefs.fontForDate
+        switch.setOnCheckedChangeListener { view, on ->
+            selectionTick(view)
+            prefs.fontForDate = on
+            settingsChanged()
+        }
+        findViewById<View>(R.id.font_date_row).setOnClickListener { switch.toggle() }
     }
 
     private fun fontChip(typeface: android.graphics.Typeface, spacing: Float, label: String, selected: Boolean, onPick: () -> Unit) =

@@ -108,6 +108,24 @@ class WidgetSnapshotTest {
     }
 
     @Test
+    fun dateFollowsChosenFamily() {
+        Prefs(ctx).clockFont = ClockFont.SERIF
+        var view = inflate(222f, 181f)
+        assertEquals(View.VISIBLE, view.findViewById<View>(R.id.date_serif).visibility)
+        assertEquals(View.GONE, view.findViewById<View>(R.id.date).visibility)
+        // Desactivado: la fecha vuelve a la fuente normal.
+        Prefs(ctx).fontForDate = false
+        view = inflate(222f, 181f)
+        assertEquals(View.VISIBLE, view.findViewById<View>(R.id.date).visibility)
+        assertEquals(View.GONE, view.findViewById<View>(R.id.date_serif).visibility)
+        Prefs(ctx).fontForDate = true
+        // Las variantes de OPPO Sans (fina, gruesa...) comparten la fecha normal.
+        Prefs(ctx).clockFont = ClockFont.HEAVY
+        view = inflate(222f, 181f)
+        assertEquals(View.VISIBLE, view.findViewById<View>(R.id.date).visibility)
+    }
+
+    @Test
     fun onlyChosenFontIsVisible() {
         Prefs(ctx).clockFont = ClockFont.SERIF
         val view = inflate(222f, 181f)
@@ -154,7 +172,9 @@ class WidgetSnapshotTest {
                 save(draw(w, h, wallpaper = false), "alpha_${style.key}_$name.png")
             }
         }
-        Prefs(ctx).apply { style = GlassStyle.CLEAR }
+        Prefs(ctx).apply { style = GlassStyle.CLEAR; clockFont = ClockFont.SERIF }
+        save(draw(222f, 181f, wallpaper = true), "date_serif_medium.png")
+        Prefs(ctx).clockFont = ClockFont.LIGHT
         // Medida del hueco 3×3 libre en la captura del inicio (para componer la vista previa).
         save(draw(210f, 300f, wallpaper = false), "alpha_home_3x3.png")
         for (font in ClockFont.entries) {
@@ -175,6 +195,7 @@ class WidgetSnapshotTest {
             save(draw(222f, 181f, wallpaper = true), "custom_font_medium.png")
             save(draw(222f, 273f, wallpaper = true), "custom_font_large.png")
             save(draw(144f, 181f, wallpaper = true), "custom_font_small.png")
+            save(draw(378f, 273f, wallpaper = true), "custom_font_xl.png")
         } finally {
             CustomFont.remove(ctx)
             Prefs(ctx).useCustomFont = false

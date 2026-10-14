@@ -160,6 +160,25 @@
         <item name="android:format24Hour">EEEE d MMMM</item>
     </style>
 
+    <!-- La fecha sigue la familia de la fuente elegida para la hora (ver ClockFont.dateId). -->
+    <style name="WidgetText.Date.Condensed">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+    </style>
+
+    <style name="WidgetText.Date.Serif">
+        <item name="android:fontFamily">serif</item>
+    </style>
+
+    <style name="WidgetText.Date.Mono">
+        <item name="android:fontFamily">monospace</item>
+    </style>
+
+    <style name="WidgetText.Date.Script">
+        <item name="android:fontFamily">cursive</item>
+        <item name="android:textFontWeight">700</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
     <style name="WidgetText.Temp">
         <item name="android:textFontWeight">500</item>
     </style>

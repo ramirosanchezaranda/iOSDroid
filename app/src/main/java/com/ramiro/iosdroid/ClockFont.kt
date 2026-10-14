@@ -18,17 +18,30 @@ enum class ClockFont(
     val letterSpacing: Float,
     /** TextClock del widget que usa esta fuente (ver layout/widget_time.xml). */
     val timeId: Int,
+    /** Fecha del widget con la misma familia (los pesos extremos quedan solo para la hora). */
+    val dateId: Int,
 ) {
-    THIN("thin", R.string.font_thin, "sans-serif", 200, -0.02f, R.id.time_thin),
-    LIGHT("light", R.string.font_light, "sans-serif", 300, -0.02f, R.id.time_light),
-    REGULAR("regular", R.string.font_regular, "sans-serif", 400, -0.02f, R.id.time_regular),
-    BOLD("bold", R.string.font_bold, "sans-serif", 700, -0.03f, R.id.time_bold),
-    HEAVY("heavy", R.string.font_heavy, "sans-serif", 900, -0.03f, R.id.time_heavy),
-    CONDENSED("condensed", R.string.font_condensed, "sans-serif-condensed", 400, -0.01f, R.id.time_condensed),
-    SERIF("serif", R.string.font_serif, "serif", 400, 0f, R.id.time_serif),
-    MONO("mono", R.string.font_mono, "monospace", 400, -0.04f, R.id.time_mono),
-    SCRIPT("script", R.string.font_script, "cursive", 700, 0f, R.id.time_script),
+    THIN("thin", R.string.font_thin, "sans-serif", 200, -0.02f, R.id.time_thin, R.id.date),
+    LIGHT("light", R.string.font_light, "sans-serif", 300, -0.02f, R.id.time_light, R.id.date),
+    REGULAR("regular", R.string.font_regular, "sans-serif", 400, -0.02f, R.id.time_regular, R.id.date),
+    BOLD("bold", R.string.font_bold, "sans-serif", 700, -0.03f, R.id.time_bold, R.id.date),
+    HEAVY("heavy", R.string.font_heavy, "sans-serif", 900, -0.03f, R.id.time_heavy, R.id.date),
+    CONDENSED("condensed", R.string.font_condensed, "sans-serif-condensed", 400, -0.01f, R.id.time_condensed, R.id.date_condensed),
+    SERIF("serif", R.string.font_serif, "serif", 400, 0f, R.id.time_serif, R.id.date_serif),
+    MONO("mono", R.string.font_mono, "monospace", 400, -0.04f, R.id.time_mono, R.id.date_mono),
+    SCRIPT("script", R.string.font_script, "cursive", 700, 0f, R.id.time_script, R.id.date_script),
     ;
+
+    /** Fuente de la fecha: misma familia, peso medio (como la jerarquía de iOS). */
+    fun dateTypeface(): Typeface {
+        val base = Typeface.create(family, Typeface.NORMAL)
+        val w = if (this == SCRIPT) 700 else 500
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            Typeface.create(base, w, false)
+        } else {
+            Typeface.create(base, if (w >= 600) Typeface.BOLD else Typeface.NORMAL)
+        }
+    }
 
     fun typeface(): Typeface {
         val base = Typeface.create(family, Typeface.NORMAL)
@@ -41,6 +54,9 @@ enum class ClockFont(
 
     companion object {
         fun from(key: String?) = entries.firstOrNull { it.key == key } ?: LIGHT
+
+        /** Todas las variantes de fecha del widget (sin repetir). */
+        val DATE_IDS = entries.map { it.dateId }.distinct()
     }
 }
 
